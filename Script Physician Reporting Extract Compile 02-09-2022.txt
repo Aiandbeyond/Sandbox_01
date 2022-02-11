@@ -1,0 +1,2046 @@
+
+/*
+
+--##--- Script create date  05-13-2019
+--##--- This script produces the Revenue Cycle Physician Performance Data Extract 
+--##--- Data Source: Meditech EHR 
+--##--- Server DR_01
+
+
+
+*/
+
+Drop table  #tbl_001
+
+
+Select
+t2.*
+
+into #tbl_001
+from
+(
+Select Distinct
+	t1.VisitID,
+	t2.ProviderID,
+	t2.SeqID, ---Added this data element om 10-25-2021
+	t2.DateTime,
+	t1.DischargeDateTime,
+	t2.Code,
+	t3.GrouperVersion
+
+from AbstractData t1
+left outer Join BarSurgicalProcedures t2
+on t1.VisitID = t2.VisitID
+left outer join BarVisitFinancialData4 t3 on
+t1.VisitID = t3.VisitID
+--where (t1.ProviderID = 'GEOGR'
+--and t1.DateTime like '%2018%'
+where t1.DischargeDateTime like '%2021%'
+)t2
+
+
+
+-- Notes: After further analysis TSG Millenium logic operates off the discharge date being the primary. In the event a discharge is not present the logic seem to use the surgical proc date. 02-2020
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Creates the procedure code dataset
+
+Select distinct
+	t1.VisitID,
+	t1.ProviderID,
+	t1.DateTime,
+	t1.SeqID, ---Add this 10-25-2021
+	t1.Code,
+	t2.Name
+into #tbl_01
+from #tbl_001 t1
+left outer join DAbsProcedures t2 on
+t1.Code = t2.ProcedureID and
+t1.GrouperVersion = t2.GrouperVersionID
+
+--Functional Dependency 
+
+select
+	t1.VisitID
+
+from #tbl_01 t1
+group by
+	t1.VisitID
+having count(*)>1
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+--X55APR
+create table #tbl_APRDRGCROSSWALK(
+DRGCODE  Varchar(3),
+APRDRG_Descr Varchar(500))
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+insert into #tbl_APRDRGCROSSWALK values ('001', 'Liver transplant &/or intestinal transplant'); 
+insert into #tbl_APRDRGCROSSWALK values ('002', 'Heart &/or lung transplant'); 
+insert into #tbl_APRDRGCROSSWALK values ('003', 'Bone marrow transplant'); 
+insert into #tbl_APRDRGCROSSWALK values ('4', 'Tracheostomy w MV 96+ hours w extensive procedure or ECMO'); 
+insert into #tbl_APRDRGCROSSWALK values ('004', 'Tracheostomy w MV 96+ hours w extensive procedure or ECMO'); 
+insert into #tbl_APRDRGCROSSWALK values ('005', 'Tracheostomy w MV 96+ hours w/o extensive procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('006', 'Pancreas transplant'); 
+insert into #tbl_APRDRGCROSSWALK values ('020', 'Craniotomy for trauma'); 
+insert into #tbl_APRDRGCROSSWALK values ('20', 'Craniotomy for trauma'); 
+insert into #tbl_APRDRGCROSSWALK values ('021', 'Craniotomy except for trauma'); 
+insert into #tbl_APRDRGCROSSWALK values ('21', 'Craniotomy except for trauma'); 
+insert into #tbl_APRDRGCROSSWALK values ('022', 'Ventricular shunt procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('22', 'Ventricular shunt procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('023', 'Spinal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('23', 'Spinal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('024', 'Extracranial vascular procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('24', 'Extracranial vascular procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('026', 'Other nervous system & related procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('26', 'Other nervous system & related procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('040', 'Spinal disorders & injuries'); 
+insert into #tbl_APRDRGCROSSWALK values ('40', 'Spinal disorders & injuries'); 
+insert into #tbl_APRDRGCROSSWALK values ('041', 'Nervous system malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('41', 'Nervous system malignancy');
+insert into #tbl_APRDRGCROSSWALK values ('042', 'Degenerative nervous system disorders exc mult sclerosis'); 
+insert into #tbl_APRDRGCROSSWALK values ('42', 'Degenerative nervous system disorders exc mult sclerosis'); 
+insert into #tbl_APRDRGCROSSWALK values ('043', 'Multiple sclerosis & other demyelinating diseases'); 
+insert into #tbl_APRDRGCROSSWALK values ('43', 'Multiple sclerosis & other demyelinating diseases'); 
+insert into #tbl_APRDRGCROSSWALK values ('044', 'Intracranial hemorrhage'); 
+insert into #tbl_APRDRGCROSSWALK values ('44', 'Intracranial hemorrhage'); 
+insert into #tbl_APRDRGCROSSWALK values ('045', 'CVA & precerebral occlusion w infarct'); 
+insert into #tbl_APRDRGCROSSWALK values ('45', 'CVA & precerebral occlusion w infarct'); 
+insert into #tbl_APRDRGCROSSWALK values ('046', 'Nonspecific CVA & precerebral occlusion w/o infarct'); 
+insert into #tbl_APRDRGCROSSWALK values ('46', 'Nonspecific CVA & precerebral occlusion w/o infarct'); 
+insert into #tbl_APRDRGCROSSWALK values ('047', 'Transient ischemia'); 
+insert into #tbl_APRDRGCROSSWALK values ('47', 'Transient ischemia'); 
+insert into #tbl_APRDRGCROSSWALK values ('048', 'Peripheral, cranial & autonomic nerve disorders');
+insert into #tbl_APRDRGCROSSWALK values ('48', 'Peripheral, cranial & autonomic nerve disorders');
+insert into #tbl_APRDRGCROSSWALK values ('049', 'Bacterial & tuberculous infections of nervous system'); 
+insert into #tbl_APRDRGCROSSWALK values ('49', 'Bacterial & tuberculous infections of nervous system'); 
+insert into #tbl_APRDRGCROSSWALK values ('050', 'Non-bacterial infections of nervous system exc viral meningitis'); 
+insert into #tbl_APRDRGCROSSWALK values ('50', 'Non-bacterial infections of nervous system exc viral meningitis'); 
+insert into #tbl_APRDRGCROSSWALK values ('051', 'Viral meningitis'); 
+insert into #tbl_APRDRGCROSSWALK values ('51', 'Viral meningitis'); 
+insert into #tbl_APRDRGCROSSWALK values ('052', 'Nontraumatic stupor & coma'); 
+insert into #tbl_APRDRGCROSSWALK values ('52', 'Nontraumatic stupor & coma'); 
+insert into #tbl_APRDRGCROSSWALK values ('053', 'Seizure'); 
+insert into #tbl_APRDRGCROSSWALK values ('53', 'Seizure'); 
+insert into #tbl_APRDRGCROSSWALK values ('054', 'Migraine & other headaches'); 
+insert into #tbl_APRDRGCROSSWALK values ('54', 'Migraine & other headaches'); 
+insert into #tbl_APRDRGCROSSWALK values ('055', 'Head trauma w coma >1 hr or hemorrhage'); 
+insert into #tbl_APRDRGCROSSWALK values ('55', 'Head trauma w coma >1 hr or hemorrhage'); 
+insert into #tbl_APRDRGCROSSWALK values ('056', 'Brain contusion/laceration & complicated skull Fx, coma < 1 hr or no coma'); 
+insert into #tbl_APRDRGCROSSWALK values ('56', 'Brain contusion/laceration & complicated skull Fx, coma < 1 hr or no coma'); 
+insert into #tbl_APRDRGCROSSWALK values ('057', 'Concussion, closed skull Fx nos,uncomplicated intracranial injury, coma < 1 hr or no coma'); 
+insert into #tbl_APRDRGCROSSWALK values ('57', 'Concussion, closed skull Fx nos,uncomplicated intracranial injury, coma < 1 hr or no coma');
+insert into #tbl_APRDRGCROSSWALK values ('058', 'Other disorders of nervous system');
+insert into #tbl_APRDRGCROSSWALK values ('58', 'Other disorders of nervous system'); 
+insert into #tbl_APRDRGCROSSWALK values ('070', 'Orbital procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('70', 'Orbital procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('073', 'Eye procedures except orbit'); 
+insert into #tbl_APRDRGCROSSWALK values ('73', 'Eye procedures except orbit'); 
+insert into #tbl_APRDRGCROSSWALK values ('080', 'Acute major eye infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('80', 'Acute major eye infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('082', 'Eye disorders except major infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('82', 'Eye disorders except major infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('089', 'Major cranial/facial bone procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('89', 'Major cranial/facial bone procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('090', 'Major larynx & trachea procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('90', 'Major larynx & trachea procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('091', 'Other major head & neck procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('91', 'Other major head & neck procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('092', 'Facial bone procedures except major cranial/facial bone procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('92', 'Facial bone procedures except major cranial/facial bone procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('093', 'Sinus & mastoid procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('93', 'Sinus & mastoid procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('095', 'Cleft lip & palate repair'); 
+insert into #tbl_APRDRGCROSSWALK values ('95', 'Cleft lip & palate repair'); 
+insert into #tbl_APRDRGCROSSWALK values ('097', 'Tonsil & adenoid procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('97', 'Tonsil & adenoid procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('098', 'Other ear, nose, mouth & throat procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('98', 'Other ear, nose, mouth & throat procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('110', 'Ear, nose, mouth, throat, cranial/facial malignancies'); 
+insert into #tbl_APRDRGCROSSWALK values ('111', 'Vertigo & other labyrinth disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('113', 'Infections of upper respiratory tract'); 
+insert into #tbl_APRDRGCROSSWALK values ('114', 'Dental & oral diseases & injuries'); 
+insert into #tbl_APRDRGCROSSWALK values ('115', 'Other ear, nose, mouth,throat & cranial/facial diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('120', 'Major respiratory & chest procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('121', 'Other respiratory & chest procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('130', 'Respiratory system diagnosis w ventilator support 96+ hours'); 
+insert into #tbl_APRDRGCROSSWALK values ('131', 'Cystic fibrosis - pulmonary disease'); 
+insert into #tbl_APRDRGCROSSWALK values ('132', 'BPD & oth chronic respiratory diseases arising in perinatal period'); 
+insert into #tbl_APRDRGCROSSWALK values ('133', 'Respiratory Failure'); 
+insert into #tbl_APRDRGCROSSWALK values ('134', 'Pulmonary embolism'); 
+insert into #tbl_APRDRGCROSSWALK values ('135', 'Major chest & respiratory trauma'); 
+insert into #tbl_APRDRGCROSSWALK values ('136', 'Respiratory malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('137', 'Major respiratory infections & inflammations'); 
+insert into #tbl_APRDRGCROSSWALK values ('138', 'Bronchiolitis & RSV pneumonia'); 
+insert into #tbl_APRDRGCROSSWALK values ('139', 'Other pneumonia'); 
+insert into #tbl_APRDRGCROSSWALK values ('140', 'Chronic obstructive pulmonary disease'); 
+insert into #tbl_APRDRGCROSSWALK values ('141', 'Asthma'); 
+insert into #tbl_APRDRGCROSSWALK values ('142', 'Interstitial & alveolar lung diseases'); 
+insert into #tbl_APRDRGCROSSWALK values ('143', 'Other respiratory diagnoses except signs, symptoms & minor diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('144', 'Respiratory signs, symptoms & minor diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('160', 'Major cardiothoracic repair of heart anomaly'); 
+insert into #tbl_APRDRGCROSSWALK values ('161', 'Cardiac defibrillator & heart assist implant'); 
+insert into #tbl_APRDRGCROSSWALK values ('162', 'Cardiac valve procedures w AMI or complex PDX'); 
+insert into #tbl_APRDRGCROSSWALK values ('163', 'Cardiac valve procedures w/o AMI or complex PDX'); 
+insert into #tbl_APRDRGCROSSWALK values ('165', 'Coronary bypass w AMI or complex PDX'); 
+insert into #tbl_APRDRGCROSSWALK values ('166', 'Coronary bypass w/o AMI or complex PDX'); 
+insert into #tbl_APRDRGCROSSWALK values ('167', 'Other cardiothoracic & thoracic vascular procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('169', 'Major abdominal vascular procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('170', 'Permanent cardiac pacemaker implant w AMI, heart failure or shock'); 
+insert into #tbl_APRDRGCROSSWALK values ('171', 'Perm cardiac pacemaker implant w/o AMI, heart failure or shock');
+insert into #tbl_APRDRGCROSSWALK values ('173', 'Other Vascular Procedures');  
+insert into #tbl_APRDRGCROSSWALK values ('174', 'Percutaneous coronary intervention w AMI'); 
+insert into #tbl_APRDRGCROSSWALK values ('175', 'Percutaneous coronary intervention w/o AMI'); 
+insert into #tbl_APRDRGCROSSWALK values ('176', 'Cardiac pacemaker & defibrillator device replacement'); 
+insert into #tbl_APRDRGCROSSWALK values ('177', 'Cardiac pacemaker & defibrillator revision except device replacement'); 
+insert into #tbl_APRDRGCROSSWALK values ('180', 'Other circulatory system procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('181', 'Lower extremity arterial procedures #'); 
+insert into #tbl_APRDRGCROSSWALK values ('182', 'Other peripheral vascular procedures #'); 
+insert into #tbl_APRDRGCROSSWALK values ('185', 'MAJOR CHEST TRAUMA W/O CC/MCC'); 
+insert into #tbl_APRDRGCROSSWALK values ('190', 'Acute myocardial infarction'); 
+insert into #tbl_APRDRGCROSSWALK values ('191', 'Cardiac catheterization for coronary artery disease'); 
+insert into #tbl_APRDRGCROSSWALK values ('192', 'Cardiac catheterization for other non-coronary conditions'); 
+insert into #tbl_APRDRGCROSSWALK values ('193', 'Acute & subacute endocarditis'); 
+insert into #tbl_APRDRGCROSSWALK values ('194', 'Heart failure'); 
+insert into #tbl_APRDRGCROSSWALK values ('196', 'Cardiac arrest and shock'); 
+insert into #tbl_APRDRGCROSSWALK values ('197', 'Peripheral & other vascular disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('198', 'Angina pectoris & coronary atherosclerosis'); 
+insert into #tbl_APRDRGCROSSWALK values ('199', 'Hypertension'); 
+insert into #tbl_APRDRGCROSSWALK values ('200', 'Cardiac structural & valvular disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('201', 'Cardiac arrhythmia & conduction disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('203', 'Chest pain'); 
+insert into #tbl_APRDRGCROSSWALK values ('204', 'Syncope & collapse'); 
+insert into #tbl_APRDRGCROSSWALK values ('205', 'Cardiomyopathy'); 
+insert into #tbl_APRDRGCROSSWALK values ('206', 'Malfunction,reaction,complication of cardiac/vasc device or procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('207', 'Other circulatory system diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('210', 'HIP & FEMUR PROCEDURES EXCEPT MAJOR JOINT AGE >17 W CC'); 
+insert into #tbl_APRDRGCROSSWALK values ('220', 'Major stomach, esophageal & duodenal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('221', 'Major small & large bowel procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('222', 'Other stomach, esophageal & duodenal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('223', 'Other small & large bowel procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('224', 'Peritoneal adhesiolysis'); 
+insert into #tbl_APRDRGCROSSWALK values ('225', 'Appendectomy'); 
+insert into #tbl_APRDRGCROSSWALK values ('226', 'Anal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('227', 'Hernia procedures except inguinal, femoral & umbilical'); 
+insert into #tbl_APRDRGCROSSWALK values ('228', 'Inguinal, femoral & umbilical hernia procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('229', 'Other digestive system & abdominal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('240', 'Digestive malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('241', 'Peptic ulcer & gastritis'); 
+insert into #tbl_APRDRGCROSSWALK values ('242', 'Major esophageal disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('243', 'Other esophageal disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('244', 'Diverticulitis & diverticulosis'); 
+insert into #tbl_APRDRGCROSSWALK values ('245', 'Inflammatory bowel disease'); 
+insert into #tbl_APRDRGCROSSWALK values ('246', 'Gastrointestinal vascular insufficiency'); 
+insert into #tbl_APRDRGCROSSWALK values ('247', 'Intestinal obstruction'); 
+insert into #tbl_APRDRGCROSSWALK values ('248', 'Major gastrointestinal & peritoneal infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('249', 'Other gastroenteritis, nausa & vomiting'); 
+insert into #tbl_APRDRGCROSSWALK values ('251', 'Abdominal pain'); 
+insert into #tbl_APRDRGCROSSWALK values ('252', 'Malfunction, reaction & complication of GI device or procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('253', 'Other & unspecified gastrointestinal hemorrhage'); 
+insert into #tbl_APRDRGCROSSWALK values ('254', 'Other digestive system diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('260', 'Major pancreas, liver & shunt procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('261', 'Major biliary tract procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('262', 'Cholecystectomy except laparoscopic'); 
+insert into #tbl_APRDRGCROSSWALK values ('263', 'Laparoscopic cholecystectomy'); 
+insert into #tbl_APRDRGCROSSWALK values ('264', 'Other hepatobiliary, pancreas & abdominal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('279', 'Hepatic coma & other major acute liver disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('280', 'Alcoholic liver disease'); 
+insert into #tbl_APRDRGCROSSWALK values ('281', 'Malignancy of hepatobiliary system & pancreas'); 
+insert into #tbl_APRDRGCROSSWALK values ('282', 'Disorders of pancreas except malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('283', 'Other disorders of the liver'); 
+insert into #tbl_APRDRGCROSSWALK values ('284', 'Disorders of gallbladder & biliary tract'); 
+insert into #tbl_APRDRGCROSSWALK values ('301', 'Hip joint replacement'); 
+insert into #tbl_APRDRGCROSSWALK values ('302', 'Knee joint replacement'); 
+insert into #tbl_APRDRGCROSSWALK values ('303', 'Dorsal & lumbar fusion proc for curvature of back'); 
+insert into #tbl_APRDRGCROSSWALK values ('304', 'Dorsal & lumbar fusion proc except for curvature of back'); 
+insert into #tbl_APRDRGCROSSWALK values ('305', 'Amputation of lower limb except toes'); 
+insert into #tbl_APRDRGCROSSWALK values ('308', 'Hip and femur fracture repair'); 
+insert into #tbl_APRDRGCROSSWALK values ('309', 'Other significant hip and femur surgery'); 
+insert into #tbl_APRDRGCROSSWALK values ('310', 'Intervertebral disc excision & decompression'); 
+insert into #tbl_APRDRGCROSSWALK values ('312', 'Skin graft, except hand, for musculoskeletal & connective tissue diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('313', 'Knee & lower leg procedures except foot'); 
+insert into #tbl_APRDRGCROSSWALK values ('314', 'Foot & toe procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('315', 'Shoulder, upper arm & forearm procedures except joint replacement'); 
+insert into #tbl_APRDRGCROSSWALK values ('316', 'Hand & wrist procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('317', 'Tendon, muscle & other soft tissue procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('320', 'Other musculoskeletal system & connective tissue procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('321', 'Cervical spinal fusion & other back/neck proc exc disc excis/decomp'); 
+insert into #tbl_APRDRGCROSSWALK values ('322', 'Shoulder & elbow joint replacement #'); 
+insert into #tbl_APRDRGCROSSWALK values ('340', 'Fracture of femur'); 
+insert into #tbl_APRDRGCROSSWALK values ('341', 'Fracture of pelvis or dislocation of hip'); 
+insert into #tbl_APRDRGCROSSWALK values ('342', 'Fractures & dislocations except femur, pelvis & back'); 
+insert into #tbl_APRDRGCROSSWALK values ('343', 'Musculoskeletal malignancy & pathol fracture d/t muscskel malig'); 
+insert into #tbl_APRDRGCROSSWALK values ('344', 'Osteomyelitis, septic arthritis & other musculoskeletal infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('346', 'Connective tissue disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('347', 'Other back & neck disorders, fractures & injuries'); 
+insert into #tbl_APRDRGCROSSWALK values ('349', 'Malfunction, reaction, complic of orthopedic device or procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('351', 'Other musculoskeletal system & connective tissue diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('361', 'Skin graft for skin & subcutaneous tissue diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('362', 'Mastectomy procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('363', 'Breast procedures except mastectomy'); 
+insert into #tbl_APRDRGCROSSWALK values ('364', 'Other skin, subcutaneous tissue & related procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('380', 'Skin ulcers'); 
+insert into #tbl_APRDRGCROSSWALK values ('381', 'Major skin disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('382', 'Malignant breast disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('383', 'Cellulitis & other skin infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('384', 'Contusion, open wound & other trauma to skin & subcutaneous tissue'); 
+insert into #tbl_APRDRGCROSSWALK values ('385', 'Other skin, subcutaneous tissue & breast disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('401', 'Pituitary & adrenal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('403', 'Procedures for obesity'); 
+insert into #tbl_APRDRGCROSSWALK values ('404', 'Thyroid, parathyroid & thyroglossal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('405', 'Other procedures for endocrine, nutritional & metabolic disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('420', 'Diabetes'); 
+insert into #tbl_APRDRGCROSSWALK values ('421', 'Malnutrition, failure to thrive & other nutritional disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('422', 'Hypovolemia & related electrolyte disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('423', 'Inborn errors of metabolism'); 
+insert into #tbl_APRDRGCROSSWALK values ('424', 'Other endocrine disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('425', 'Electrolyte disorders except hypovolemia related'); 
+insert into #tbl_APRDRGCROSSWALK values ('440', 'Kidney transplant'); 
+insert into #tbl_APRDRGCROSSWALK values ('441', 'Major bladder procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('442', 'Kidney & urinary tract procedures for malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('443', 'Kidney & urinary tract procedures for nonmalignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('444', 'Renal dialysis access device procedure only'); 
+insert into #tbl_APRDRGCROSSWALK values ('445', 'Other bladder procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('446', 'Urethral & transurethral procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('447', 'Other kidney, urinary tract & related procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('461', 'Kidney & urinary tract malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('462', 'Nephritis & nephrosis'); 
+insert into #tbl_APRDRGCROSSWALK values ('463', 'Kidney & urinary tract infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('465', 'Urinary stones & acquired upper urinary tract obstruction'); 
+insert into #tbl_APRDRGCROSSWALK values ('466', 'Malfunction, reaction, complic of genitourinary device or proc'); 
+insert into #tbl_APRDRGCROSSWALK values ('468', 'Other kidney & urinary tract diagnoses, signs & symptoms'); 
+insert into #tbl_APRDRGCROSSWALK values ('469', 'Acute Kidney Injury #'); 
+insert into #tbl_APRDRGCROSSWALK values ('470', 'Chronic Kidney Disease #'); 
+insert into #tbl_APRDRGCROSSWALK values ('480', 'Major male pelvic procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('481', 'Penis procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('482', 'Transurethral prostatectomy'); 
+insert into #tbl_APRDRGCROSSWALK values ('483', 'Testes & scrotal procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('484', 'Other male reproductive system & related procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('500', 'Malignancy, male reproductive system'); 
+insert into #tbl_APRDRGCROSSWALK values ('501', 'Male reproductive system diagnoses except malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('510', 'Pelvic evisceration, radical hysterectomy & other radical GYN procs'); 
+insert into #tbl_APRDRGCROSSWALK values ('511', 'Uterine & adnexa procedures for ovarian & adnexal malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('512', 'Uterine & adnexa procedures for non-ovarian & non-adnexal malig'); 
+insert into #tbl_APRDRGCROSSWALK values ('513', 'Uterine & adnexa procedures for non-malignancy except leiomyoma'); 
+insert into #tbl_APRDRGCROSSWALK values ('514', 'Female reproductive system reconstructive procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('517', 'Dilation & curettage for non-obstetric diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('518', 'Other female reproductive system & related procedures'); 
+insert into #tbl_APRDRGCROSSWALK values ('519', 'Uterine & adnexa procedures for leiomyoma'); 
+insert into #tbl_APRDRGCROSSWALK values ('530', 'Female reproductive system malignancy'); 
+insert into #tbl_APRDRGCROSSWALK values ('531', 'Female reproductive system infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('532', 'Menstrual & other female reproductive system disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('540', 'Cesarean delivery'); 
+insert into #tbl_APRDRGCROSSWALK values ('541', 'Vaginal delivery w sterilization &/or D&C'); 
+insert into #tbl_APRDRGCROSSWALK values ('542', 'Vaginal delivery w complicating procedures exc sterilization &/or D&C'); 
+insert into #tbl_APRDRGCROSSWALK values ('544', 'D&C, aspiration curettage or hysterotomy for obstetric diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('545', 'Ectopic pregnancy procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('546', 'Other O.R. proc for obstetric diagnoses except delivery diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('560', 'Vaginal delivery'); 
+insert into #tbl_APRDRGCROSSWALK values ('561', 'Postpartum & post abortion diagnoses w/o procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('563', 'Preterm labor'); 
+insert into #tbl_APRDRGCROSSWALK values ('564', 'Abortion w/o D&C, aspiration curettage or hysterotomy'); 
+insert into #tbl_APRDRGCROSSWALK values ('565', 'False labor'); 
+insert into #tbl_APRDRGCROSSWALK values ('566', 'Other antepartum diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('580', 'Neonate, transferred <5 days old, not born here'); 
+insert into #tbl_APRDRGCROSSWALK values ('581', 'Neonate, transferred < 5 days old, born here'); 
+insert into #tbl_APRDRGCROSSWALK values ('583', 'Neonate w ECMO'); 
+insert into #tbl_APRDRGCROSSWALK values ('588', 'Neonate bwt <1500g w major procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('589', 'Neonate bwt <500g or GA <24 weeks'); 
+insert into #tbl_APRDRGCROSSWALK values ('591', 'Neonate birthwt 500-749g w/o major procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('593', 'Neonate birthwt 750-999g w/o major procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('602', 'Neonate bwt 1000-1249g w resp dist synd/oth maj resp or maj anom'); 
+insert into #tbl_APRDRGCROSSWALK values ('603', 'Neonate birthwt 1000-1249g w or w/o other significant condition'); 
+insert into #tbl_APRDRGCROSSWALK values ('607', 'Neonate bwt 1250-1499g w resp dist synd/oth maj resp or maj anom'); 
+insert into #tbl_APRDRGCROSSWALK values ('608', 'Neonate bwt 1250-1499g w or w/o other significant condition'); 
+insert into #tbl_APRDRGCROSSWALK values ('609', 'Neonate bwt 1500-2499g w major procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('611', 'Neonate birthwt 1500-1999g w major anomaly'); 
+insert into #tbl_APRDRGCROSSWALK values ('612', 'Neonate bwt 1500-1999g w resp dist synd/oth maj resp cond'); 
+insert into #tbl_APRDRGCROSSWALK values ('613', 'Neonate birthwt 1500-1999g w congenital/perinatal infection'); 
+insert into #tbl_APRDRGCROSSWALK values ('614', 'Neonate bwt 1500-1999g w or w/o other significant condition'); 
+insert into #tbl_APRDRGCROSSWALK values ('621', 'Neonate bwt 2000-2499g w major anomaly'); 
+insert into #tbl_APRDRGCROSSWALK values ('622', 'Neonate bwt 2000-2499g w resp dist synd/oth maj resp cond'); 
+insert into #tbl_APRDRGCROSSWALK values ('623', 'Neonate bwt 2000-2499g w congenital/perinatal infection'); 
+insert into #tbl_APRDRGCROSSWALK values ('625', 'Neonate bwt 2000-2499g w other significant condition'); 
+insert into #tbl_APRDRGCROSSWALK values ('626', 'Neonate bwt 2000-2499g, normal newborn or neonate w other problem'); 
+insert into #tbl_APRDRGCROSSWALK values ('630', 'Neonate birthwt >2499g w major cardiovascular procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('631', 'Neonate birthwt >2499g w other major procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('633', 'Neonate birthwt >2499g w major anomaly'); 
+insert into #tbl_APRDRGCROSSWALK values ('634', 'Neonate, birthwt >2499g w resp dist synd/oth maj resp cond'); 
+insert into #tbl_APRDRGCROSSWALK values ('636', 'Neonate birthwt >2499g w congenital/perinatal infection'); 
+insert into #tbl_APRDRGCROSSWALK values ('639', 'Neonate birthwt >2499g w other significant condition'); 
+insert into #tbl_APRDRGCROSSWALK values ('640', 'Neonate birthwt >2499g, normal newborn or neonate w other problem'); 
+insert into #tbl_APRDRGCROSSWALK values ('650', 'Splenectomy'); 
+insert into #tbl_APRDRGCROSSWALK values ('651', 'Other procedures of blood & blood-forming organs'); 
+insert into #tbl_APRDRGCROSSWALK values ('660', 'Major hematologic/immunologic diag exc sickle cell crisis & coagul'); 
+insert into #tbl_APRDRGCROSSWALK values ('661', 'Coagulation & platelet disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('662', 'Sickle cell anemia crisis'); 
+insert into #tbl_APRDRGCROSSWALK values ('663', 'Other anemia & disorders of blood & blood-forming organs'); 
+insert into #tbl_APRDRGCROSSWALK values ('680', 'Major O.R. procedures for lymphatic/hematopoietic/other neoplasms'); 
+insert into #tbl_APRDRGCROSSWALK values ('681', 'Other O.R. procedures for lymphatic/hematopoietic/other neoplasms'); 
+insert into #tbl_APRDRGCROSSWALK values ('690', 'Acute leukemia'); 
+insert into #tbl_APRDRGCROSSWALK values ('691', 'Lymphoma, myeloma & non-acute leukemia'); 
+insert into #tbl_APRDRGCROSSWALK values ('692', 'Radiotherapy'); 
+insert into #tbl_APRDRGCROSSWALK values ('694', 'Lymphatic & other malignancies & neoplasms of uncertain behavior'); 
+insert into #tbl_APRDRGCROSSWALK values ('695', 'Chemotherapy for acute leukemia #'); 
+insert into #tbl_APRDRGCROSSWALK values ('696', 'Other Chemotherapy #'); 
+insert into #tbl_APRDRGCROSSWALK values ('710', 'Infectious & parasitic diseases including HIV w O.R. procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('711', 'Post-op, post-trauma, other device infections w O.R. procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('720', 'Septicemia & disseminated infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('721', 'Post-operative, post-traumatic, other device infections'); 
+insert into #tbl_APRDRGCROSSWALK values ('722', 'Fever'); 
+insert into #tbl_APRDRGCROSSWALK values ('723', 'Viral illness'); 
+insert into #tbl_APRDRGCROSSWALK values ('724', 'Other infectious & parasitic diseases'); 
+insert into #tbl_APRDRGCROSSWALK values ('740', 'Mental illness diagnosis w O.R. procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('750', 'Schizophrenia'); 
+insert into #tbl_APRDRGCROSSWALK values ('751', 'Major depressive disorders & other/unspecified psychoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('752', 'Disorders of personality & impulse control'); 
+insert into #tbl_APRDRGCROSSWALK values ('753', 'Bipolar disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('754', 'Depression except major depressive disorder'); 
+insert into #tbl_APRDRGCROSSWALK values ('755', 'Adjustment disorders & neuroses except depressive diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('756', 'Acute anxiety & delirium states'); 
+insert into #tbl_APRDRGCROSSWALK values ('757', 'Organic mental health disturbances'); 
+insert into #tbl_APRDRGCROSSWALK values ('758', 'Behavioral disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('759', 'Eating disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('760', 'Other mental health disorders'); 
+insert into #tbl_APRDRGCROSSWALK values ('770', 'Drug & alcohol abuse or dependence, left against medical advice'); 
+insert into #tbl_APRDRGCROSSWALK values ('772', 'Alcohol & drug dependence w rehab or rehab/detox therapy'); 
+insert into #tbl_APRDRGCROSSWALK values ('773', 'Opioid abuse & dependence'); 
+insert into #tbl_APRDRGCROSSWALK values ('774', 'Cocaine abuse & dependence'); 
+insert into #tbl_APRDRGCROSSWALK values ('775', 'Alcohol abuse & dependence'); 
+insert into #tbl_APRDRGCROSSWALK values ('776', 'Other drug abuse & dependence'); 
+insert into #tbl_APRDRGCROSSWALK values ('778', 'CESAREAN SECTION WITHOUT STERILIZATION WITHOUT CC/MCC'); 
+insert into #tbl_APRDRGCROSSWALK values ('788', 'CESAREAN SECTION WITHOUT STERILIZATION WITHOUT CC/MCC'); 
+insert into #tbl_APRDRGCROSSWALK values ('791', 'O.R. procedure for other complications of treatment'); 
+insert into #tbl_APRDRGCROSSWALK values ('811', 'Allergic reactions'); 
+insert into #tbl_APRDRGCROSSWALK values ('812', 'Poisoning of medicinal agents'); 
+insert into #tbl_APRDRGCROSSWALK values ('813', 'Other complications of treatment'); 
+insert into #tbl_APRDRGCROSSWALK values ('815', 'Other injury, poisoning & toxic effect diagnoses'); 
+insert into #tbl_APRDRGCROSSWALK values ('816', 'Toxic effects of non-medicinal substances'); 
+insert into #tbl_APRDRGCROSSWALK values ('831', 'OTHER ANTEPARTUM DIAGNOSES WITHOUT O.R. PROCEDURES WITH MCC'); 
+insert into #tbl_APRDRGCROSSWALK values ('841', 'Extensive 3rd degree burns w skin graft'); 
+insert into #tbl_APRDRGCROSSWALK values ('842', 'Burns with skin graft except extensive 3rd degree burns'); 
+insert into #tbl_APRDRGCROSSWALK values ('843', 'Extensive 3rd degree or full thickness burns w/o skin graft'); 
+insert into #tbl_APRDRGCROSSWALK values ('844', 'Partial thickness burns without skin graft'); 
+insert into #tbl_APRDRGCROSSWALK values ('850', 'Procedure w diag of rehab, aftercare or oth contact w health service'); 
+insert into #tbl_APRDRGCROSSWALK values ('860', 'Rehabilitation'); 
+insert into #tbl_APRDRGCROSSWALK values ('861', 'Signs, symptoms & other factors influencing health status'); 
+insert into #tbl_APRDRGCROSSWALK values ('862', 'Other aftercare & convalescence'); 
+insert into #tbl_APRDRGCROSSWALK values ('863', 'Neonatal aftercare'); 
+insert into #tbl_APRDRGCROSSWALK values ('890', 'HIV w multiple major HIV related conditions'); 
+insert into #tbl_APRDRGCROSSWALK values ('892', 'HIV w major HIV related condition'); 
+insert into #tbl_APRDRGCROSSWALK values ('893', 'HIV w multiple significant HIV related conditions'); 
+insert into #tbl_APRDRGCROSSWALK values ('894', 'HIV w one signif HIV cond or w/o signif related cond'); 
+insert into #tbl_APRDRGCROSSWALK values ('910', 'Craniotomy for multiple significant trauma'); 
+insert into #tbl_APRDRGCROSSWALK values ('911', 'Extensive abdominal/thoracic procedures for mult significant trauma'); 
+insert into #tbl_APRDRGCROSSWALK values ('912', 'Musculoskeletal & other procedures for multiple significant trauma'); 
+insert into #tbl_APRDRGCROSSWALK values ('930', 'Multiple significant trauma w/o O.R. procedure'); 
+insert into #tbl_APRDRGCROSSWALK values ('950', 'Extensive procedure unrelated to principal diagnosis'); 
+insert into #tbl_APRDRGCROSSWALK values ('951', 'Moderately extensive procedure unrelated to principal diagnosis'); 
+insert into #tbl_APRDRGCROSSWALK values ('952', 'Nonextensive procedure unrelated to principal diagnosis'); 
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+--X55MSDRG
+create table #tbl_MSDRGCROSSWALK(
+DRGCODE  Varchar(3),
+MSDRG_Descr Varchar(500))
+
+-------------------------------------------------------------------------------------------
+insert into #tbl_MSDRGCROSSWALK values ('1', 'Heart transplant or implant of heart assist system w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('2', 'Heart transplant or implant of heart assist system w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('3', 'ECMO or trach w MV 96+ hrs or PDX exc face, mouth & neck w maj O.R.'); 
+insert into #tbl_MSDRGCROSSWALK values ('4', 'Trach w MV 96+ hrs or PDX exc face, mouth & neck w/o maj O.R.'); 
+insert into #tbl_MSDRGCROSSWALK values ('5', 'Liver transplant w MCC or intestinal transplant'); 
+insert into #tbl_MSDRGCROSSWALK values ('6', 'Liver transplant w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('7', 'Lung transplant'); 
+insert into #tbl_MSDRGCROSSWALK values ('8', 'Simultaneous pancreas/kidney transplant'); 
+insert into #tbl_MSDRGCROSSWALK values ('9', 'Bone marrow transplant'); 
+insert into #tbl_MSDRGCROSSWALK values ('10', 'Pancreas transplant'); 
+insert into #tbl_MSDRGCROSSWALK values ('11', 'Tracheostomy for face,mouth & neck diagnoses w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('12', 'Tracheostomy for face,mouth & neck diagnoses w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('13', 'Tracheostomy for face,mouth & neck diagnoses w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('20', 'Intracranial vascular procedures w PDX hemorrhage w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('21', 'Intracranial vascular procedures w PDX hemorrhage w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('22', 'Intracranial vascular procedures w PDX hemorrhage w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('23', 'Cranio w major dev impl/acute complex CNS PDX w MCC or chemo implant'); 
+insert into #tbl_MSDRGCROSSWALK values ('24', 'Cranio w major dev impl/acute complex CNS PDX w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('25', 'Craniotomy & endovascular intracranial procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('26', 'Craniotomy & endovascular intracranial procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('27', 'Craniotomy & endovascular intracranial procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('28', 'Spinal procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('29', 'Spinal procedures w CC or spinal neurostimulators'); 
+insert into #tbl_MSDRGCROSSWALK values ('30', 'Spinal procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('31', 'Ventricular shunt procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('32', 'Ventricular shunt procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('33', 'Ventricular shunt procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('34', 'Carotid artery stent procedure w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('35', 'Carotid artery stent procedure w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('36', 'Carotid artery stent procedure w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('37', 'Extracranial procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('38', 'Extracranial procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('39', 'Extracranial procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('40', 'Periph & cranial nerve & other nerv syst proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('41', 'Periph/cranial nerve & other nerv syst proc w CC or periph neurostim'); 
+insert into #tbl_MSDRGCROSSWALK values ('42', 'Periph & cranial nerve & other nerv syst proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('52', 'Spinal disorders & injuries w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('53', 'Spinal disorders & injuries w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('54', 'Nervous system neoplasms w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('55', 'Nervous system neoplasms w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('56', 'Degenerative nervous system disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('57', 'Degenerative nervous system disorders w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('58', 'Multiple sclerosis & cerebellar ataxia w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('59', 'Multiple sclerosis & cerebellar ataxia w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('60', 'Multiple sclerosis & cerebellar ataxia w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('61', 'Acute ischemic stroke w use of thrombolytic agent w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('62', 'Acute ischemic stroke w use of thrombolytic agent w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('63', 'Acute ischemic stroke w use of thrombolytic agent w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('64', 'Intracranial hemorrhage or cerebral infarction w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('65', 'Intracranial hemorrhage or cerebral infarction w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('66', 'Intracranial hemorrhage or cerebral infarction w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('67', 'Nonspecific cva & precerebral occlusion w/o infarct w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('68', 'Nonspecific cva & precerebral occlusion w/o infarct w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('69', 'Transient ischemia'); 
+insert into #tbl_MSDRGCROSSWALK values ('70', 'Nonspecific cerebrovascular disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('71', 'Nonspecific cerebrovascular disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('72', 'Nonspecific cerebrovascular disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('73', 'Cranial & peripheral nerve disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('74', 'Cranial & peripheral nerve disorders w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('75', 'Viral meningitis w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('76', 'Viral meningitis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('77', 'Hypertensive encephalopathy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('78', 'Hypertensive encephalopathy w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('79', 'Hypertensive encephalopathy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('80', 'Nontraumatic stupor & coma w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('81', 'Nontraumatic stupor & coma w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('82', 'Traumatic stupor & coma, coma >1 hr w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('83', 'Traumatic stupor & coma, coma >1 hr w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('84', 'Traumatic stupor & coma, coma >1 hr w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('85', 'Traumatic stupor & coma, coma <1 hr w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('86', 'Traumatic stupor & coma, coma <1 hr w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('87', 'Traumatic stupor & coma, coma <1 hr w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('88', 'Concussion w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('89', 'Concussion w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('90', 'Concussion w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('91', 'Other disorders of nervous system w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('92', 'Other disorders of nervous system w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('93', 'Other disorders of nervous system w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('94', 'Bacterial & tuberculous infections of nervous system w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('95', 'Bacterial & tuberculous infections of nervous system w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('96', 'Bacterial & tuberculous infections of nervous system w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('97', 'Non-bacterial infect of nervous sys exc viral meningitis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('98', 'Non-bacterial infect of nervous sys exc viral meningitis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('99', 'Non-bacterial infect of nervous sys exc viral meningitis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('100', 'Seizures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('101', 'Seizures w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('102', 'Headaches w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('103', 'Headaches w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('113', 'Orbital procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('114', 'Orbital procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('115', 'Extraocular procedures except orbit'); 
+insert into #tbl_MSDRGCROSSWALK values ('116', 'Intraocular procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('117', 'Intraocular procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('121', 'Acute major eye infections w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('122', 'Acute major eye infections w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('123', 'Neurological eye disorders'); 
+insert into #tbl_MSDRGCROSSWALK values ('124', 'Other disorders of the eye w  MCC '); 
+insert into #tbl_MSDRGCROSSWALK values ('125', 'Other disorders of the eye w/o  MCC '); 
+insert into #tbl_MSDRGCROSSWALK values ('129', 'Major head & neck procedures w CC/MCC or major device'); 
+insert into #tbl_MSDRGCROSSWALK values ('130', 'Major head & neck procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('131', 'Cranial/facial procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('132', 'Cranial/facial procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('133', 'Other ear, nose, mouth & throat O.R. procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('134', 'Other ear, nose, mouth & throat O.R. procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('135', 'Sinus & mastoid procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('136', 'Sinus & mastoid procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('137', 'Mouth procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('138', 'Mouth procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('139', 'Salivary gland procedures'); 
+insert into #tbl_MSDRGCROSSWALK values ('146', 'Ear, nose, mouth & throat malignancy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('147', 'Ear, nose, mouth & throat malignancy w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('148', 'Ear, nose, mouth & throat malignancy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('149', 'Dysequilibrium'); 
+insert into #tbl_MSDRGCROSSWALK values ('150', 'Epistaxis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('151', 'Epistaxis w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('152', 'Otitis media & URI w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('153', 'Otitis media & URI w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('154', 'Nasal trauma & deformity w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('155', 'Nasal trauma & deformity w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('156', 'Nasal trauma & deformity w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('157', 'Dental & Oral Diseases w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('158', 'Dental & Oral Diseases w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('159', 'Dental & Oral Diseases w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('160', 'HERNIA PROCEDURES EXCEPT INGUINAL & FEMORAL AGE >17 W/O CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('163', 'Major chest procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('164', 'Major chest procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('165', 'Major chest procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('166', 'Other resp system O.R. procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('167', 'Other resp system O.R. procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('168', 'Other resp system O.R. procedures w/o CC/MCC');
+insert into #tbl_MSDRGCROSSWALK values ('173', 'DIGESTIVE MALIGNANCY W/O CC');   
+insert into #tbl_MSDRGCROSSWALK values ('175', 'Pulmonary embolism w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('176', 'Pulmonary embolism w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('177', 'Respiratory infections & inflammations w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('178', 'Respiratory infections & inflammations w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('179', 'Respiratory infections & inflammations w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('180', 'Respiratory neoplasms w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('181', 'Respiratory neoplasms w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('182', 'Respiratory neoplasms w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('183', 'Major chest trauma w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('184', 'Major chest trauma w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('185', 'Major chest trauma w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('186', 'Pleural effusion w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('187', 'Pleural effusion w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('188', 'Pleural effusion w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('189', 'Pulmonary edema & respiratory failure'); 
+insert into #tbl_MSDRGCROSSWALK values ('190', 'Chronic obstructive pulmonary disease w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('191', 'Chronic obstructive pulmonary disease w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('192', 'Chronic obstructive pulmonary disease w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('193', 'Simple pneumonia & pleurisy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('194', 'Simple pneumonia & pleurisy w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('195', 'Simple pneumonia & pleurisy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('196', 'Interstitial lung disease w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('197', 'Interstitial lung disease w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('198', 'Interstitial lung disease w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('199', 'Pneumothorax w MCC '); 
+insert into #tbl_MSDRGCROSSWALK values ('200', 'Pneumothorax w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('201', 'Pneumothorax w/o CC/MCC '); 
+insert into #tbl_MSDRGCROSSWALK values ('202', 'Bronchitis & asthma w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('203', 'Bronchitis & asthma w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('204', 'Respiratory signs & symptoms'); 
+insert into #tbl_MSDRGCROSSWALK values ('205', 'Other respiratory system diagnoses w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('206', 'Other respiratory system diagnoses w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('207', 'Respiratory system diagnosis w ventilator support 96+ hours'); 
+insert into #tbl_MSDRGCROSSWALK values ('208', 'Respiratory system diagnosis w ventilator support <96 hours'); 
+insert into #tbl_MSDRGCROSSWALK values ('215', 'Other heart assist system implant'); 
+insert into #tbl_MSDRGCROSSWALK values ('216', 'Cardiac valve & oth maj cardiothoracic proc w card cath w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('217', 'Cardiac valve & oth maj cardiothoracic proc w card cath w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('218', 'Cardiac valve & oth maj cardiothoracic proc w card cath w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('219', 'Cardiac valve & oth maj cardiothoracic proc w/o card cath w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('220', 'Cardiac valve & oth maj cardiothoracic proc w/o card cath w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('221', 'Cardiac valve & oth maj cardiothoracic proc w/o card cath w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('222', 'Cardiac defib implant w cardiac cath w AMI/HF/shock w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('223', 'Cardiac defib implant w cardiac cath w AMI/HF/shock w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('224', 'Cardiac defib implant w cardiac cath w/o AMI/HF/shock w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('225', 'Cardiac defib implant w cardiac cath w/o AMI/HF/shock w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('226', 'Cardiac defibrillator implant w/o cardiac cath w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('227', 'Cardiac defibrillator implant w/o cardiac cath w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('228', 'Other cardiothoracic procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('229', 'Other cardiothoracic procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('230', 'Other cardiothoracic procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('231', 'Coronary bypass w PTCA w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('232', 'Coronary bypass w PTCA w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('233', 'Coronary bypass w cardiac cath w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('234', 'Coronary bypass w cardiac cath w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('235', 'Coronary bypass w/o cardiac cath w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('236', 'Coronary bypass w/o cardiac cath w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('237', 'Major cardiovasc procedures w MCC or thoracic aortic anuerysm repair'); 
+insert into #tbl_MSDRGCROSSWALK values ('238', 'Major cardiovascular procedures w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('239', 'Amputation for circ sys disorders exc upper limb & toe w MCC '); 
+insert into #tbl_MSDRGCROSSWALK values ('240', 'Amputation for circ sys disorders exc upper limb & toe w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('241', 'Amputation for circ sys disorders exc upper limb & toe w/o CC/MCC '); 
+insert into #tbl_MSDRGCROSSWALK values ('242', 'Permanent cardiac pacemaker implant w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('243', 'Permanent cardiac pacemaker implant w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('244', 'Permanent cardiac pacemaker implant w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('245', 'AICD lead & generator procedures'); 
+insert into #tbl_MSDRGCROSSWALK values ('246', 'Perc cardiovasc proc w drug-eluting stent w MCC or 4+ vessels/stents'); 
+insert into #tbl_MSDRGCROSSWALK values ('247', 'Perc cardiovasc proc w drug-eluting stent w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('248', 'Perc cardiovasc proc w non-drug-eluting stent w MCC or 4+ ves/stents'); 
+insert into #tbl_MSDRGCROSSWALK values ('249', 'Perc cardiovasc proc w non-drug-eluting stent w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('250', 'Perc cardiovasc proc w/o coronary artery stent or AMI w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('251', 'Perc cardiovasc proc w/o coronary artery stent or AMI w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('252', 'Other vascular procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('253', 'Other vascular procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('254', 'Other vascular procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('255', 'Upper limb & toe amputation for circ system disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('256', 'Upper limb & toe amputation for circ system disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('257', 'Upper limb & toe amputation for circ system disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('258', 'Cardiac pacemaker device replacement w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('259', 'Cardiac pacemaker device replacement w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('260', 'Cardiac pacemaker revision except device replacement w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('261', 'Cardiac pacemaker revision except device replacement w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('262', 'Cardiac pacemaker revision except device replacement w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('263', 'Vein ligation & stripping'); 
+insert into #tbl_MSDRGCROSSWALK values ('264', 'Other circulatory system O.R. procedures'); 
+insert into #tbl_MSDRGCROSSWALK values ('280', 'Acute myocardial infarction, discharged alive w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('281', 'Acute myocardial infarction, discharged alive w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('282', 'Acute myocardia infarction, discharged alive w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('283', 'Acute myocardial infarction, expired w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('284', 'Acute myocardial infarction, expired w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('285', 'Acute myocardial infarction, expired w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('286', 'Circulatory disorders except AMI, w card cath w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('287', 'Circulatory disorders except AMI, w card cath w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('288', 'Acute & subacute endocarditis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('289', 'Acute & subacute endocarditis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('290', 'Acute & subacute endocarditis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('291', 'Heart failure & shock w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('292', 'Heart failure & shock w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('293', 'Heart failure & shock w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('294', 'Deep vein thrombophlebitis w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('295', 'Deep vein thrombophlebitis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('296', 'Cardiac arrest, unexplained w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('297', 'Cardiac arrest, unexplained w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('298', 'Cardiac arrest, unexplained w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('299', 'Peripheral vascular disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('300', 'Peripheral vascular disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('301', 'Peripheral vascular disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('302', 'Atherosclerosis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('303', 'Atherosclerosis w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('304', 'Hypertension w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('305', 'Hypertension w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('306', 'Cardiac congenital & valvular disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('307', 'Cardiac congenital & valvular disorders w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('308', 'Cardiac arrhythmia & conduction disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('309', 'Cardiac arrhythmia & conduction disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('310', 'Cardiac arrhythmia & conduction disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('311', 'Angina pectoris'); 
+insert into #tbl_MSDRGCROSSWALK values ('312', 'Syncope & collapse'); 
+insert into #tbl_MSDRGCROSSWALK values ('313', 'Chest pain'); 
+insert into #tbl_MSDRGCROSSWALK values ('314', 'Other circulatory system diagnoses w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('315', 'Other circulatory system diagnoses w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('316', 'Other circulatory system diagnoses w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('326', 'Stomach, esophageal & duodenal proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('327', 'Stomach, esophageal & duodenal proc w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('328', 'Stomach, esophageal & duodenal proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('329', 'Major small & large bowel procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('330', 'Major small & large bowel procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('331', 'Major small & large bowel procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('332', 'Rectal resection w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('333', 'Rectal resection w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('334', 'Rectal resection w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('335', 'Peritoneal adhesiolysis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('336', 'Peritoneal adhesiolysis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('337', 'Peritoneal adhesiolysis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('338', 'Appendectomy w complicated principal diag w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('339', 'Appendectomy w complicated principal diag w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('340', 'Appendectomy w complicated principal diag w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('341', 'Appendectomy w/o complicated principal diag w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('342', 'Appendectomy w/o complicated principal diag w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('343', 'Appendectomy w/o complicated principal diag w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('344', 'Minor small & large bowel procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('345', 'Minor small & large bowel procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('346', 'Minor small & large bowel procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('347', 'Anal & stomal procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('348', 'Anal & stomal procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('349', 'Anal & stomal procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('350', 'Inguinal & femoral hernia procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('351', 'Inguinal & femoral hernia procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('352', 'Inguinal & femoral hernia procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('353', 'Hernia procedures except inguinal & femoral w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('354', 'Hernia procedures except inguinal & femoral w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('355', 'Hernia procedures except inguinal & femoral w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('356', 'Other digestive system O.R. procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('357', 'Other digestive system O.R. procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('358', 'Other digestive system O.R. procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('368', 'Major esophageal disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('369', 'Major esophageal disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('370', 'Major esophageal disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('371', 'Major gastrointestinal disorders & peritoneal infections w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('372', 'Major gastrointestinal disorders & peritoneal infections w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('373', 'Major gastrointestinal disorders & peritoneal infections w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('374', 'Digestive malignancy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('375', 'Digestive malignancy w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('376', 'Digestive malignancy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('377', 'G.I. hemorrhage w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('378', 'G.I. hemorrhage w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('379', 'G.I. hemorrhage w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('380', 'Complicated peptic ulcer w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('381', 'Complicated peptic ulcer w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('382', 'Complicated peptic ulcer w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('383', 'Uncomplicated peptic ulcer w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('384', 'Uncomplicated peptic ulcer w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('385', 'Inflammatory bowel disease w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('386', 'Inflammatory bowel disease w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('387', 'Inflammatory bowel disease w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('388', 'G.I. obstruction w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('389', 'G.I. obstruction w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('390', 'G.I. obstruction w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('391', 'Esophagitis, gastroent & misc digest disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('392', 'Esophagitis, gastroent & misc digest disorders w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('393', 'Other digestive system diagnoses w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('394', 'Other digestive system diagnoses w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('395', 'Other digestive system diagnoses w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('405', 'Pancreas, liver & shunt procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('406', 'Pancreas, liver & shunt procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('407', 'Pancreas, liver & shunt procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('408', 'Biliary tract proc except only cholecyst w or w/o c.d.e. w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('409', 'Biliary tract proc except only cholecyst w or w/o c.d.e. w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('410', 'Biliary tract proc except only cholecyst w or w/o c.d.e. w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('411', 'Cholecystectomy w c.d.e. w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('412', 'Cholecystectomy w c.d.e. w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('413', 'Cholecystectomy w c.d.e. w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('414', 'Cholecystectomy except by laparoscope w/o c.d.e. w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('415', 'Cholecystectomy except by laparoscope w/o c.d.e. w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('416', 'Cholecystectomy except by laparoscope w/o c.d.e. w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('417', 'Laparoscopic cholecystectomy w/o c.d.e. w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('418', 'Laparoscopic cholecystectomy w/o c.d.e. w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('419', 'Laparoscopic cholecystectomy w/o c.d.e. w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('420', 'Hepatobiliary diagnostic procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('421', 'Hepatobiliary diagnostic procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('422', 'Hepatobiliary diagnostic procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('423', 'Other hepatobiliary or pancreas O.R. procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('424', 'Other hepatobiliary or pancreas O.R. procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('425', 'Other hepatobiliary or pancreas O.R. procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('432', 'Cirrhosis & alcoholic hepatitis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('433', 'Cirrhosis & alcoholic hepatitis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('434', 'Cirrhosis & alcoholic hepatitis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('435', 'Malignancy of hepatobiliary system or pancreas w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('436', 'Malignancy of hepatobiliary system or pancreas w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('437', 'Malignancy of hepatobiliary system or pancreas w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('438', 'Disorders of pancreas except malignancy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('439', 'Disorders of pancreas except malignancy w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('440', 'Disorders of pancreas except malignancy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('441', 'Disorders of liver except malig,cirr,alc hepa w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('442', 'Disorders of liver except malig,cirr,alc hepa w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('443', 'Disorders of liver except malig,cirr,alc hepa w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('444', 'Disorders of the biliary tract w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('445', 'Disorders of the biliary tract w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('446', 'Disorders of the biliary tract w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('453', 'Combined anterior/posterior spinal fusion w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('454', 'Combined anterior/posterior spinal fusion w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('455', 'Combined anterior/posterior spinal fusion w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('456', 'Spinal fus exc cerv w spinal curv/malig/infec or 9+ fus w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('457', 'Spinal fus exc cerv w spinal curv/malig/infec or 9+ fus w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('458', 'Spinal fus exc cerv w spinal curv/malig/infec or 9+ fus w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('459', 'Spinal fusion except cervical w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('460', 'Spinal fusion except cervical w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('461', 'Bilateral or multiple major joint procs of lower extremity w MCC '); 
+insert into #tbl_MSDRGCROSSWALK values ('462', 'Bilateral or multiple major joint procs of lower extremity w/o MCC '); 
+insert into #tbl_MSDRGCROSSWALK values ('463', 'Wnd debrid & skn grft exc hand, for musculo-conn tiss dis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('464', 'Wnd debrid & skn grft exc hand, for musculo-conn tiss dis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('465', 'Wnd debrid & skn grft exc hand, for musculo-conn tiss dis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('466', 'Revision of hip or knee replacement w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('467', 'Revision of hip or knee replacement w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('468', 'Revision of hip or knee replacement w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('469', 'Major joint replacement or reattachment of lower extremity w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('470', 'Major joint replacement or reattachment of lower extremity w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('471', 'Cervical spinal fusion w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('472', 'Cervical spinal fusion w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('473', 'Cervical spinal fusion w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('474', 'Amputation for musculoskeletal sys & conn tissue dis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('475', 'Amputation for musculoskeletal sys & conn tissue dis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('476', 'Amputation for musculoskeletal sys & conn tissue dis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('477', 'Biopsies of musculoskeletal system & connective tissue w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('478', 'Biopsies of musculoskeletal system & connective tissue w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('479', 'Biopsies of musculoskeletal system & connective tissue w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('480', 'Hip & femur procedures except major joint w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('481', 'Hip & femur procedures except major joint w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('482', 'Hip & femur procedures except major joint w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('483', 'Major joint & limb reattachment proc of upper extremity w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('484', 'Major joint & limb reattachment proc of upper extremity w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('485', 'Knee procedures w pdx of infection w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('486', 'Knee procedures w pdx of infection w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('487', 'Knee procedures w pdx of infection w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('488', 'Knee procedures w/o pdx of infection w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('489', 'Knee procedures w/o pdx of infection w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('490', 'Back & neck proc exc spinal fusion w CC/MCC or disc device/neurostim'); 
+insert into #tbl_MSDRGCROSSWALK values ('491', 'Back & neck proc exc spinal fusion w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('492', 'Lower extrem & humer proc except hip,foot,femur w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('493', 'Lower extrem & humer proc except hip,foot,femur w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('494', 'Lower extrem & humer proc except hip,foot,femur w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('495', 'Local excision & removal int fix devices exc hip & femur w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('496', 'Local excision & removal int fix devices exc hip & femur w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('497', 'Local excision & removal int fix devices exc hip & femur w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('498', 'Local excision & removal int fix devices of hip & femur w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('499', 'Local excision & removal int fix devices of hip & femur w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('500', 'Soft tissue procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('501', 'Soft tissue procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('502', 'Soft tissue procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('503', 'Foot procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('504', 'Foot procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('505', 'Foot procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('506', 'Major thumb or joint procedures'); 
+insert into #tbl_MSDRGCROSSWALK values ('507', 'Major shoulder or elbow joint procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('508', 'Major shoulder or elbow joint procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('509', 'Arthroscopy'); 
+insert into #tbl_MSDRGCROSSWALK values ('510', 'Shoulder,elbow or forearm proc,exc major joint proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('511', 'Shoulder,elbow or forearm proc,exc major joint proc w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('512', 'Shoulder,elbow or forearm proc,exc major joint proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('513', 'Hand or wrist proc, except major thumb or joint proc w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('514', 'Hand or wrist proc, except major thumb or joint proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('515', 'Other musculoskelet sys & conn tiss O.R. proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('516', 'Other musculoskelet sys & conn tiss O.R. proc w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('517', 'Other musculoskelet sys & conn tiss O.R. proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('533', 'Fractures of femur w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('534', 'Fractures of femur w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('535', 'Fractures of hip & pelvis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('536', 'Fractures of hip & pelvis w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('537', 'Sprains, strains, & dislocations of hip, pelvis & thigh w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('538', 'Sprains, strains, & dislocations of hip, pelvis & thigh w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('539', 'Osteomyelitis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('540', 'Osteomyelitis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('541', 'Osteomyelitis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('542', 'Pathological fractures & musculoskelet & conn tiss malig w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('543', 'Pathological fractures & musculoskelet & conn tiss malig w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('544', 'Pathological fractures & musculoskelet & conn tiss malig w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('545', 'Connective tissue disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('546', 'Connective tissue disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('547', 'Connective tissue disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('548', 'Septic arthritis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('549', 'Septic arthritis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('550', 'Septic arthritis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('551', 'Medical back problems w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('552', 'Medical back problems w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('553', 'Bone diseases & arthropathies w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('554', 'Bone diseases & arthropathies w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('555', 'Signs & symptoms of musculoskeletal system & conn tissue w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('556', 'Signs & symptoms of musculoskeletal system & conn tissue w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('557', 'Tendonitis, myositis & bursitis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('558', 'Tendonitis, myositis & bursitis w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('559', 'Aftercare, musculoskeletal system & connective tissue w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('560', 'Aftercare, musculoskeletal system & connective tissue w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('561', 'Aftercare, musculoskeletal system & connective tissue w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('562', 'Fx, sprn, strn & disl except femur, hip, pelvis & thigh w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('563', 'Fx, sprn, strn & disl except femur, hip, pelvis & thigh w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('564', 'Other musculoskeletal sys & connective tissue diagnoses w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('565', 'Other musculoskeletal sys & connective tissue diagnoses w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('566', 'Other musculoskeletal sys & connective tissue diagnoses w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('571', 'SKIN DEBRIDEMENT W CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('573', 'Skin graft &/or debrid for skn ulcer or cellulitis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('574', 'Skin graft &/or debrid for skn ulcer or cellulitis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('575', 'Skin graft &/or debrid for skn ulcer or cellulitis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('576', 'Skin graft &/or debrid exc for skin ulcer or cellulitis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('577', 'Skin graft &/or debrid exc for skin ulcer or cellulitis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('578', 'Skin graft &/or debrid exc for skin ulcer or cellulitis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('579', 'Other skin, subcut tiss & breast proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('580', 'Other skin, subcut tiss & breast proc w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('581', 'Other skin, subcut tiss & breast proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('582', 'Mastectomy for malignancy w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('583', 'Mastectomy for malignancy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('584', 'Breast biopsy, local excision & other breast procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('585', 'Breast biopsy, local excision & other breast procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('592', 'Skin ulcers w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('593', 'Skin ulcers w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('594', 'Skin ulcers w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('595', 'Major skin disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('596', 'Major skin disorders w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('597', 'Malignant breast disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('598', 'Malignant breast disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('599', 'Malignant breast disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('600', 'Non-malignant breast disorders w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('601', 'Non-malignant breast disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('602', 'Cellulitis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('603', 'Cellulitis w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('604', 'Trauma to the skin, subcut tiss & breast w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('605', 'Trauma to the skin, subcut tiss & breast w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('606', 'Minor skin disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('607', 'Minor skin disorders w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('614', 'Adrenal & pituitary procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('615', 'Adrenal & pituitary procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('616', 'Amputat of lower limb for endocrine,nutrit,& metabol dis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('617', 'Amputat of lower limb for endocrine,nutrit,& metabol dis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('618', 'Amputat of lower limb for endocrine,nutrit,& metabol dis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('619', 'O.R. procedures for obesity w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('620', 'O.R. procedures for obesity w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('621', 'O.R. procedures for obesity w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('622', 'Skin grafts & wound debrid for endoc, nutrit & metab dis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('623', 'Skin grafts & wound debrid for endoc, nutrit & metab dis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('624', 'Skin grafts & wound debrid for endoc, nutrit & metab dis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('625', 'Thyroid, parathyroid & thyroglossal procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('626', 'Thyroid, parathyroid & thyroglossal procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('627', 'Thyroid, parathyroid & thyroglossal procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('628', 'Other endocrine, nutrit & metab O.R. proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('629', 'Other endocrine, nutrit & metab O.R. proc w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('630', 'Other endocrine, nutrit & metab O.R. proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('637', 'Diabetes w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('638', 'Diabetes w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('639', 'Diabetes w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('640', 'Nutritional & misc metabolic disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('641', 'Nutritional & misc metabolic disorders w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('642', 'Inborn errors of metabolism'); 
+insert into #tbl_MSDRGCROSSWALK values ('643', 'Endocrine disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('644', 'Endocrine disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('645', 'Endocrine disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('650', 'HIGH RISK VAGINAL DELIVERY W STERILIZATION AND/OR D&C'); 
+insert into #tbl_MSDRGCROSSWALK values ('652', 'Kidney transplant'); 
+insert into #tbl_MSDRGCROSSWALK values ('653', 'Major bladder procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('654', 'Major bladder procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('655', 'Major bladder procedures w/o CC/MCC  '); 
+insert into #tbl_MSDRGCROSSWALK values ('656', 'Kidney & ureter procedures for neoplasm w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('657', 'Kidney & ureter procedures forneoplasm w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('658', 'Kidney & ureter procedures for neoplasm w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('659', 'Kidney & ureter procedures for non-neoplasm w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('660', 'Kidney & ureter procedures for non-neoplasm w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('661', 'Kidney & ureter procedures for non-neoplasm w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('662', 'Minor bladder procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('663', 'Minor bladder procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('664', 'Minor bladder procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('665', 'Prostatectomy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('666', 'Prostatectomy w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('667', 'Prostatectomy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('668', 'Transurethral procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('669', 'Transurethral procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('670', 'Transurethral procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('671', 'Urethral procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('672', 'Urethral procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('673', 'Other kidney & urinary tract procedures w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('674', 'Other kidney & urinary tract procedures w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('675', 'Other kidney & urinary tract procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('682', 'Renal failure w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('683', 'Renal failure w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('684', 'Renal failure w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('685', 'Admit for renal dialysis'); 
+insert into #tbl_MSDRGCROSSWALK values ('686', 'Kidney & urinary tract neoplasms w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('687', 'Kidney & urinary tract neoplasms w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('688', 'Kidney & urinary tract neoplasms w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('689', 'Kidney & urinary tract infections w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('690', 'Kidney & urinary tract infections w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('691', 'Urinary stones w esw lithotripsy w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('692', 'Urinary stones w esw lithotripsy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('693', 'Urinary stones w/o esw lithotripsy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('694', 'Urinary stones w/o esw lithotripsy w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('695', 'Kidney & urinary tract signs & symptoms w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('696', 'Kidney & urinary tract signs & symptoms w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('697', 'Urethral stricture'); 
+insert into #tbl_MSDRGCROSSWALK values ('698', 'Other kidney & urinary tract diagnoses w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('699', 'Other kidney & urinary tract diagnoses w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('700', 'Other kidney & urinary tract diagnoses w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('707', 'Major male pelvic procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('708', 'Major male pelvic procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('709', 'Penis procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('710', 'Penis procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('711', 'Testes procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('712', 'Testes procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('713', 'Transurethral prostatectomy w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('714', 'Transurethral prostatectomy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('715', 'Other male reproductive system O.R. proc for malignancy w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('716', 'Other male reproductive system O.R. proc for malignancy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('717', 'Other male reproductive system O.R. proc exc malignancy w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('718', 'Other male reproductive system O.R. proc exc malignancy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('722', 'Malignancy, male reproductive system w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('723', 'Malignancy, male reproductive system w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('724', 'Malignancy, male reproductive system w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('725', 'Benign prostatic hypertrophy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('726', 'Benign prostatic hypertrophy w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('727', 'Inflammation of the male reproductive system w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('728', 'Inflammation of the male reproductive system w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('729', 'Other male reproductive system diagnoses w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('730', 'Other male reproductive system diagnoses w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('734', 'Pelvic evisceration, rad hysterectomy & rad vulvectomy w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('735', 'Pelvic evisceration, rad hysterectomy & rad vulvectomy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('736', 'Uterine & adnexa proc for ovarian or adnexal malignancy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('737', 'Uterine & adnexa proc for ovarian or adnexal malignancy w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('738', 'Uterine & adnexa proc for ovarian or adnexal malignancy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('739', 'Uterine,adnexa proc for non-ovarian/adnexal malig w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('740', 'Uterine,adnexa proc for non-ovarian/adnexal malig w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('741', 'Uterine,adnexa proc for non-ovarian/adnexal malig w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('742', 'Uterine & adnexa proc for non-malignancy w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('743', 'Uterine & adnexa proc for non-malignancy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('744', 'D&C, conization, laparoscopy & tubal interruption w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('745', 'D&C, conization, laparoscopy & tubal interruption w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('746', 'Vagina, cervix & vulva procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('747', 'Vagina, cervix & vulva procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('748', 'Female reproductive system reconstructive procedures'); 
+insert into #tbl_MSDRGCROSSWALK values ('749', 'Other female reproductive system O.R. procedures w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('750', 'Other female reproductive system O.R. procedures w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('754', 'Malignancy, female reproductive system w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('755', 'Malignancy, female reproductive system w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('756', 'Malignancy, female reproductive system w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('757', 'Infections, female reproductive system w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('758', 'Infections, female reproductive system w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('759', 'Infections, female reproductive system w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('760', 'Menstrual & other female reproductive system disorders w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('761', 'Menstrual & other female reproductive system disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('765', 'Cesarean section w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('766', 'Cesarean section w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('767', 'Vaginal delivery w sterilization &/or D&C'); 
+insert into #tbl_MSDRGCROSSWALK values ('768', 'Vaginal delivery w O.R. proc except steril &/or D&C'); 
+insert into #tbl_MSDRGCROSSWALK values ('769', 'Postpartum & post abortion diagnoses w O.R. procedure'); 
+insert into #tbl_MSDRGCROSSWALK values ('770', 'Abortion w D&C, aspiration curettage or hysterotomy'); 
+insert into #tbl_MSDRGCROSSWALK values ('773', 'SIMPLE PNEUMONIA & PLEURISY AGE <18 W/O CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('774', 'Vaginal delivery w complicating diagnoses'); 
+insert into #tbl_MSDRGCROSSWALK values ('775', 'Vaginal delivery w/o complicating diagnoses'); 
+insert into #tbl_MSDRGCROSSWALK values ('776', 'Postpartum & post abortion diagnoses w/o O.R. procedure'); 
+insert into #tbl_MSDRGCROSSWALK values ('777', 'Ectopic pregnancy'); 
+insert into #tbl_MSDRGCROSSWALK values ('778', 'Threatened abortion'); 
+insert into #tbl_MSDRGCROSSWALK values ('779', 'Abortion w/o D&C'); 
+insert into #tbl_MSDRGCROSSWALK values ('780', 'False labor'); 
+insert into #tbl_MSDRGCROSSWALK values ('781', 'Other antepartum diagnoses w medical complications'); 
+insert into #tbl_MSDRGCROSSWALK values ('782', 'Other antepartum diagnoses w/o medical complications'); 
+insert into #tbl_MSDRGCROSSWALK values ('783', 'CESAREAN SECTION W STERILIZATION W CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('784', 'CESAREAN SECTION W STERILIZATION W CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('786', 'CESAREAN SECTION W/O STERILIZATION W MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('787', 'CESAREAN SECTION W/O STERILIZATION W CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('785', 'CESAREAN SECTION WITH STERILIZATION WITHOUT CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('788', 'CESAREAN SECTION WITHOUT STERILIZATION WITHOUT CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('789', 'Neonates, died or transferred to another acute care facility'); 
+insert into #tbl_MSDRGCROSSWALK values ('790', 'Extreme immaturity or respiratory distress syndrome, neonate'); 
+insert into #tbl_MSDRGCROSSWALK values ('791', 'Prematurity w major problems'); 
+insert into #tbl_MSDRGCROSSWALK values ('792', 'Prematurity w/o major problems'); 
+insert into #tbl_MSDRGCROSSWALK values ('793', 'Full term neonate w major problems'); 
+insert into #tbl_MSDRGCROSSWALK values ('794', 'Neonate w other significant problems'); 
+insert into #tbl_MSDRGCROSSWALK values ('795', 'Normal newborn'); 
+insert into #tbl_MSDRGCROSSWALK values ('796', 'VAGINAL DELIVERY W STERILIZATION/D&C W MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('797', 'VAGINAL DELIVERY W STERILIZATION/D&C W CC');
+insert into #tbl_MSDRGCROSSWALK values ('799', 'Splenectomy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('800', 'Splenectomy w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('801', 'Splenectomy w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('802', 'Other O.R. proc of the blood & blood forming organs w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('803', 'Other O.R. proc of the blood & blood forming organs w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('804', 'Other O.R. proc of the blood & blood forming organs w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('805', 'VAGINAL DELIVERY W/O STERILIZATION/D&C W MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('806', 'VAGINAL DELIVERY W/O STERILIZATION/D&C W CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('807', 'VAGINAL DELIVERY W/O STERILIZATION/D&C W/O CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('808', 'Major hematol/immun diag exc sickle cell crisis & coagul w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('809', 'Major hematol/immun diag exc sickle cell crisis & coagul w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('810', 'Major hematol/immun diag exc sickle cell crisis & coagul w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('811', 'Red blood cell disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('812', 'Red blood cell disorders w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('813', 'Coagulation disorders'); 
+insert into #tbl_MSDRGCROSSWALK values ('814', 'Reticuloendothelial & immunity disorders w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('815', 'Reticuloendothelial & immunity disorders w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('816', 'Reticuloendothelial & immunity disorders w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('817', 'OTHER ANTEPARTUM DIAGNOSES W O.R. PROCEDURE W MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('819', 'OTHER ANTEPARTUM DIAGNOSES W O.R. PROCEDURE W/O CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('832', 'OTHER ANTEPARTUM DIAGNOSES W/O O.R. PROCEDURE W CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('820', 'Lymphoma & leukemia w major O.R. procedure w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('821', 'Lymphoma & leukemia w major O.R. procedure w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('822', 'Lymphoma & leukemia w major O.R. procedure w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('823', 'Lymphoma & non-acute leukemia w other O.R. proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('824', 'Lymphoma & non-acute leukemia w other O.R. proc w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('825', 'Lymphoma & non-acute leukemia w other O.R. proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('826', 'Myeloprolif disord or poorly diff neopl w maj O.R. proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('827', 'Myeloprolif disord or poorly diff neopl w maj O.R. proc w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('828', 'Myeloprolif disord or poorly diff neopl w maj O.R. proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('829', 'Myeloprolif disord or poorly diff neopl w other O.R. proc w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('830', 'Myeloprolif disord or poorly diff neopl w other O.R. proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('831', 'OTHER ANTEPARTUM DIAGNOSES WITHOUT O.R. PROCEDURE WITH MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('834', 'Acute leukemia w/o major O.R. procedure w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('835', 'Acute leukemia w/o major O.R. procedure w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('836', 'Acute leukemia w/o major O.R. procedure w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('837', 'Chemo w acute leukemia as sdx or w high dose chemo agent w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('838', 'Chemo w acute leukemia as sdx w CC or high dose chemo agent'); 
+insert into #tbl_MSDRGCROSSWALK values ('839', 'Chemo w acute leukemia as sdx w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('840', 'Lymphoma & non-acute leukemia w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('841', 'Lymphoma & non-acute leukemia w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('842', 'Lymphoma & non-acute leukemia w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('843', 'Other myeloprolif dis or poorly diff neopl diag w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('844', 'Other myeloprolif dis or poorly diff neopl diag w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('845', 'Other myeloprolif dis or poorly diff neopl diag w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('846', 'Chemotherapy w/o acute leukemia as secondary diagnosis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('847', 'Chemotherapy w/o acute leukemia as secondary diagnosis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('848', 'Chemotherapy w/o acute leukemia as secondary diagnosis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('849', 'Radiotherapy'); 
+insert into #tbl_MSDRGCROSSWALK values ('853', 'Infectious & parasitic diseases w O.R. procedure w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('854', 'Infectious & parasitic diseases w O.R. procedure w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('855', 'Infectious & parasitic diseases w O.R. procedure w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('856', 'Postoperative or post-traumatic infections w O.R. proc w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('857', 'Postoperative or post-traumatic infections w O.R. proc w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('858', 'Postoperative or post-traumatic infections w O.R. proc w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('862', 'Postoperative & post-traumatic infections w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('863', 'Postoperative & post-traumatic infections w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('864', 'Fever of unknown origin'); 
+insert into #tbl_MSDRGCROSSWALK values ('865', 'Viral illness w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('866', 'Viral illness w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('867', 'Other infectious & parasitic diseases diagnoses w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('868', 'Other infectious & parasitic diseases diagnoses w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('869', 'Other infectious & parasitic diseases diagnoses w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('870', 'Septicemia w MV 96+ hours'); 
+insert into #tbl_MSDRGCROSSWALK values ('871', 'Septicemia w/o MV 96+ hours w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('872', 'Septicemia w/o MV 96+ hours w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('876', 'O.R. procedure w principal diagnoses of mental illness'); 
+insert into #tbl_MSDRGCROSSWALK values ('880', 'Acute adjustment reaction & psychosocial dysfunction'); 
+insert into #tbl_MSDRGCROSSWALK values ('881', 'Depressive neuroses'); 
+insert into #tbl_MSDRGCROSSWALK values ('882', 'Neuroses except depressive'); 
+insert into #tbl_MSDRGCROSSWALK values ('883', 'Disorders of personality & impulse control'); 
+insert into #tbl_MSDRGCROSSWALK values ('884', 'Organic disturbances & mental retardation'); 
+insert into #tbl_MSDRGCROSSWALK values ('885', 'Psychoses'); 
+insert into #tbl_MSDRGCROSSWALK values ('886', 'Behavioral & developmental disorders'); 
+insert into #tbl_MSDRGCROSSWALK values ('887', 'Other mental disorder diagnoses'); 
+insert into #tbl_MSDRGCROSSWALK values ('894', 'Alcohol/drug abuse or dependence, left ama'); 
+insert into #tbl_MSDRGCROSSWALK values ('895', 'Alcohol/drug abuse or dependence w rehabilitation therapy'); 
+insert into #tbl_MSDRGCROSSWALK values ('896', 'Alcohol/drug abuse or dependence w/o rehabilitation therapy w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('897', 'Alcohol/drug abuse or dependence w/o rehabilitation therapy w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('901', 'Wound debridements for injuries w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('902', 'Wound debridements for injuries w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('903', 'Wound debridements for injuries w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('904', 'Skin grafts for injuries w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('905', 'Skin grafts for injuries w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('906', 'Hand procedures for injuries'); 
+insert into #tbl_MSDRGCROSSWALK values ('907', 'Other O.R. procedures for injuries w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('908', 'Other O.R. procedures for injuries w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('909', 'Other O.R. procedures for injuries w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('913', 'Traumatic injury w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('914', 'Traumatic injury w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('915', 'Allergic reactions w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('916', 'Allergic reactions w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('917', 'Poisoning & toxic effects of drugs w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('918', 'Poisoning & toxic effects of drugs w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('919', 'Complications of treatment w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('920', 'Complications of treatment w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('921', 'Complications of treatment w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('922', 'Other injury, poisoning & toxic effect diag w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('923', 'Other injury, poisoning & toxic effect diag w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('927', 'Extensive burns or full thickness burns w MV 96+ hrs w skin graft'); 
+insert into #tbl_MSDRGCROSSWALK values ('928', 'Full thickness burn w skin graft or inhal inj w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('929', 'Full thickness burn w skin graft or inhal inj w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('933', 'Extensive burns or full thickness burns w MV 96+ hrs w/o skin graft'); 
+insert into #tbl_MSDRGCROSSWALK values ('934', 'Full thickness burn w/o skin grft or inhal inj'); 
+insert into #tbl_MSDRGCROSSWALK values ('935', 'Non-extensive burns'); 
+insert into #tbl_MSDRGCROSSWALK values ('939', 'O.R. proc w diagnoses of other contact w health services w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('940', 'O.R. proc w diagnoses of other contact w health services w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('941', 'O.R. proc w diagnoses of other contact w health services w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('945', 'Rehabilitation w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('946', 'Rehabilitation w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('947', 'Signs & symptoms w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('948', 'Signs & symptoms w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('949', 'Aftercare w CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('950', 'Aftercare w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('951', 'Other factors influencing health status'); 
+insert into #tbl_MSDRGCROSSWALK values ('955', 'Craniotomy for multiple significant trauma'); 
+insert into #tbl_MSDRGCROSSWALK values ('956', 'Limb reattachment, hip & femur proc for multiple significant trauma'); 
+insert into #tbl_MSDRGCROSSWALK values ('957', 'Other O.R. procedures for multiple significant trauma w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('958', 'Other O.R. procedures for multiple significant trauma w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('959', 'Other O.R. procedures for multiple significant trauma w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('963', 'Other multiple significant trauma w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('964', 'Other multiple significant trauma w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('965', 'Other multiple significant trauma w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('969', 'HIV w extensive O.R. procedure w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('970', 'HIV w extensive O.R. procedure w/o MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('974', 'HIV w major related condition w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('975', 'HIV w major related condition w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('976', 'HIV w major related condition w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('977', 'HIV w or w/o other related condition'); 
+insert into #tbl_MSDRGCROSSWALK values ('981', 'Extensive O.R. procedure unrelated to principal diagnosis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('982', 'Extensive O.R. procedure unrelated to principal diagnosis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('983', 'Extensive O.R. procedure unrelated to principal diagnosis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('984', 'Prostatic O.R. procedure unrelated to principal diagnosis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('985', 'Prostatic O.R. procedure unrelated to principal diagnosis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('986', 'Prostatic O.R. procedure unrelated to principal diagnosis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('987', 'Non-extensive O.R. proc unrelated to principal diagnosis w MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('988', 'Non-extensive O.R. proc unrelated to principal diagnosis w CC'); 
+insert into #tbl_MSDRGCROSSWALK values ('989', 'Non-extensive O.R. proc unrelated to principal diagnosis w/o CC/MCC'); 
+insert into #tbl_MSDRGCROSSWALK values ('998', 'Principal diagnosis invalid as discharge diagnosis'); 
+insert into #tbl_MSDRGCROSSWALK values ('999', 'Ungroupable'); 
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+-- Creates Diag Description crosswalk as a standalone dataset 02-2020
+
+
+Select distinct
+	t1.DiagnosisCodeID,
+	t1.GrouperVersionID,
+	t1.Name
+
+
+into #DiagDescrCrosswalk
+from  DAbsDiagnoses t1
+
+inner join
+
+(Select 
+max(t1.RowUpdateDateTime) as MaxRowDate,
+t1.DiagnosisCodeID
+from  DAbsDiagnoses t1
+--where t1.DiagnosisCodeID ='S62.655A'
+Group by
+t1.DiagnosisCodeID
+)t2 on
+t1.DiagnosisCodeID = t2.DiagnosisCodeID and
+t1.RowUpdateDateTime = t2.MaxRowDate
+
+
+-----Introduced Financial Class cross walk below. The FC on Barvisits is not consistent in certain scenarios. 11/2021
+
+Select distinct
+	t1.InsuranceID,
+	t1.Active,
+	t1.InsuranceGroupID,
+	t1.DefaultFinancialClassID
+into #tbl_FinancialClass
+from DMisInsurance t1
+--where t1.InsuranceID = 'AETNAPPO'
+where t1.DefaultFinancialClassID is not null
+
+------------------------------------------------------------------------------------------------------------
+--Dataset charge volume and charge total
+
+select
+	t2.VisitID,
+	t2.ChargeCategoryID,
+	sum(t2.TransactionCount)Quantity,
+	sum(t2.Amount) as Total
+	Into #tblAbsChargesByCategories
+from
+
+(
+select
+    t1.VisitID,
+	t1.TransactionProcedureID,
+	t1.Amount,
+	t1.TransactionCount,
+	t2.ChargeCategoryID
+
+from BarChargeTransactions t1
+left outer join DBarProcedures t2 on
+t1.TransactionProcedureID = t2.ProcedureID
+--where t1.VisitID = 'D0-B20190703084951844'
+)t2
+where t2.ChargeCategoryID is not null
+group by
+	t2.VisitID,
+    t2.ChargeCategoryID
+
+--- Can use this process to emulate AbsChargesByCategory and omit the orgin AbsChargesByCategory Table ---- Introduced 20191028
+
+-------------------------------------------------------------------------------------------
+
+Drop table #tbl_02
+
+
+Select
+	T3.ProviderName_2,
+	T3.VisitID,
+	T3.AccountNumber,
+	T3.PrimaryCodeset,
+	T3.SeqID,
+	T3.CodesetDescr,
+	T3.AdmitDateTime,
+	T3.SurgeryDate,
+	T3.DischargeDispostion,
+	T3.DischargeDateTime,
+	T3.ServiceDateTime,
+	T3.PatientName,
+	T3.DOB,
+	T3.FinancialClassID,
+	T3.PrimaryInsuranceID,
+	T3.ProviderID,
+	T3.InpatientOrOutpatient,
+	T3.PatientStatus,
+	T3.AccountType,
+	T3.Diag1,
+	T3.DiagDescr,
+	T3.GrouperVersion,
+	T3.DRG,
+	T3.CostWeight,
+	T3.APRDRG_Descr,
+	T3.MSDRG_Descr,
+	T3.Cpt,
+	T3.CPTDescription,
+	Sum(T3.[M/S]) as[M/S],
+	Sum(T3.ICU) as ICU,
+	Sum(T3.TELE) as TELE,
+	Sum(T3.Drugs) as Drugs,
+	Sum(T3.Supplies) as Supplies,
+	Sum(T3.Implants) as Implants,
+	Sum(T3.LAB) as LAB,
+	Sum(T3.RAD)as RAD,
+	Sum(T3.Chemo) as Chemo,
+	Sum(T3.IVTherapy) as IVTherapy,
+	Sum(T3.Nuclear) as Nuclear,
+	Sum(T3.Rad_Pharm) as Rad_Pharm,
+	Sum(T3.CAT)as CAT,
+	Sum(T3.[OR]) as [OR],
+	Sum(T3.ANES) as ANES,
+	Sum(T3.Blood) AS Blood,
+	Sum(T3.Imag) as Imag,
+	Sum(T3.[U/S]) as [U/S],
+	Sum(T3.Resp) as Resp,
+	Sum(T3.PT) as PT,
+	Sum(T3.ER) as ER,
+	Sum(T3.MRI) as MRI,
+	Sum(T3.SixthreeSix) as [$636],
+	Sum(T3.Recover) as Recover,
+	Sum(T3.Treatment_RM) as Treatment_RM,
+	Sum(T3.Other)as Other,
+	Sum(T3.[M/S]+ T3.ICU + T3.TELE + T3.Drugs + T3.Supplies + T3.Implants + T3.LAB + T3.RAD + T3.Chemo + T3.IVTherapy + T3.Nuclear + T3.Rad_Pharm + T3.CAT +
+	T3.[OR] + T3.ANES + T3.Blood + T3.Imag + T3.[U/S] + T3.Resp + T3.PT + T3.ER + T3.MRI + T3.SixthreeSix + T3.Recover + T3.Treatment_RM + T3.Other) as TotalCharges,
+	Sum(T3.Surgical_Indicator_01) as Surgical_Indicator_01
+into #tbl_02
+from
+
+(select
+	--t2.ProviderName,
+	t2.ProviderName_2,
+	t2.VisitID,
+	t2.AccountNumber,
+	t2.PrimaryCodeset,
+	t2.SeqID, ---Add this on 10-26-2021
+	t2.CodesetDescr,
+	t2.AdmitDateTime,
+	t2.SurgeryDate,
+	t2.DischargeDispostion,
+	t2.DischargeDateTime,
+	t2.ServiceDateTime,
+	t2.PatientName,
+	t2.DOB,
+	t2.FinancialClassID,
+	t2.PrimaryInsuranceID,
+	t2.ProviderID,
+	t2.InpatientOrOutpatient,
+	t2.PatientStatus,
+	t2.AccountType,
+	t2.Diag1,
+	t2.DiagDescr,
+	t2.GrouperVersion,
+	t2.Code,
+	t2.DRG,
+	t2.CostWeight,
+    t2.APRDRG_Descr,
+	t2.MSDRG_Descr,
+	t2.Cpt,
+	t2.CPTDescription,
+	---t2.ChargeCategoryID,
+	Sum(case when t2.ChargeCategoryID in('121','122') then t2.Total else 0 end) as [M/S],
+	Sum(case when t2.ChargeCategoryID in('200') then t2.Total else 0 end) as ICU,
+	Sum(case when t2.ChargeCategoryID in('214') then t2.Total else 0 end) as TELE,
+	Sum(case when t2.ChargeCategoryID in('250','255') then t2.Total else 0 end) as Drugs,
+	Sum(case when t2.ChargeCategoryID in('270','271','272','620','621','622','623') then t2.Total else 0 end) as Supplies,
+	Sum(case when t2.ChargeCategoryID in('274','275','276','278','279') then t2.Total else 0 end) as Implants,
+	Sum(case when t2.ChargeCategoryID in('300', '301', '302','305','306','307',	'309', '310', '311', '312',	'314', '319') then t2.Total else 0 end) as LAB,
+	Sum(case when t2.ChargeCategoryID in('320', '321', '322','323','324') then t2.Total else 0 end) as RAD,
+	Sum(case when t2.ChargeCategoryID in('330', '331', '332','335') then t2.Total else 0 end) as Chemo,
+	Sum(case when t2.ChargeCategoryID in('260') then t2.Total else 0 end) as IVTherapy,
+	Sum(case when t2.ChargeCategoryID in('340', '341', '342') then t2.Total else 0 end) as Nuclear,
+	Sum(case when t2.ChargeCategoryID in('343', '344') then t2.Total else 0 end) as Rad_Pharm,
+	Sum(case when t2.ChargeCategoryID in('350', '351', '352','359') then t2.Total else 0 end) as CAT,
+	Sum(case when t2.ChargeCategoryID in('360', '361') then t2.Total else 0 end) as [OR],
+	Sum(case when t2.ChargeCategoryID in('370', '371', '372') then t2.Total else 0 end) as ANES,
+	Sum(case when t2.ChargeCategoryID in('390', '391') then t2.Total else 0 end) as Blood,
+	Sum(case when t2.ChargeCategoryID in('400', '401','403') then t2.Total else 0 end) as Imag,
+	Sum(case when t2.ChargeCategoryID in('402') then t2.Total else 0 end) as [U/S],
+	Sum(case when t2.ChargeCategoryID in('410', '412', '413','419') then t2.Total else 0 end) as Resp,
+	Sum(case when t2.ChargeCategoryID in('420', '420TIME', '421','421S','422','423','424','424S') then t2.Total else 0 end) as PT,
+	Sum(case when t2.ChargeCategoryID in('450') then t2.Total else 0 end) as ER,
+	Sum(case when t2.ChargeCategoryID in('610', '611', '612','614','615','616','618') then t2.Total else 0 end) as MRI,
+	Sum(case when t2.ChargeCategoryID in('636','636CHEMO','636VAC') then t2.Total else 0 end) as SixthreeSix,
+	Sum(case when t2.ChargeCategoryID in('710','719') then t2.Total else 0 end) as Recover,
+	Sum(case when t2.ChargeCategoryID in('510W', '760', '761','761WC') then t2.Total else 0 end) as Treatment_RM ,
+	Sum(case when t2.ChargeCategoryID not in('121',	'122',	'200',	'214',	'250',	'255',	'270',	'271',	'272',	'620',	'621',	'622',	'623',	'274',	'275',	'276',	'278',	'279',	'300',	'301',	'302',	'305',	'306',	'307',	'309',	'310',	'311',	'312',	'314',	'319',	'320',	'321',	'322',	'323',	'324',	'330',	'331',	'332',	'335',	'260',	'340',	'341',	'342',	'343',	'344',	'350',	'351',	'352',	'359',	'360',	'361',	'370',	'371',	'372',	'390',	'391',	'400',	'401',	'403',	'402',	'410',	'412',	'413',	'419',	'420',	'420TIME',	'421',	'421S',	'422',	'423',	'424',	'424S',	'450',	'610',	'611',	'612',	'614',	'615',	'616',	'618',	'636',	'636CHEMO',	'636VAC',	'710',	'719',	'510W',	'760',	'761',	'761WC'
+) then t2.Total else 0 end) as Other,
+    Sum(case when t2.ChargeCategoryID in('360', '361','371') then t2.Total else 0 end) as [Surgical_Indicator_01]
+
+
+	--Sum(t2.Quantity) as Quantity,
+	--Sum(t2.Total) as GrossCharges,
+	--t2.FinalPayment
+from 
+(Select distinct
+    --t3.Name as ProviderName,
+	t11.Name as ProviderName_2,
+    t1.VisitID,
+	t4.AccountNumber,
+	t1.Code as PrimaryCodeset,
+	t1.SeqID, ---Add this 10-25-2021
+	t1.Name as CodesetDescr,
+	t1.DateTime as SurgeryDate,
+	t4.AdmitDateTime,
+	t17.DischargeDateTime,
+	t16.Name as DischargeDispostion,
+	t4.ServiceDateTime,
+	t4.Name as PatientName,
+	t4.BirthDateTime as DOB,
+	--t4.FinancialClassID, --Replace with the below Crosswalk
+	t18.DefaultFinancialClassID as FinancialClassID,
+	t4.PrimaryInsuranceID,
+	t1.ProviderID,
+	t4.InpatientOrOutpatient,
+	t5.PatientStatus,
+	t5.AccountType,
+	t6.GrouperVersion,
+	t12.Diagnosis  As Diag1,
+	t13.Name as DiagDescr,
+	t9.Code as DRG,
+	t9.CostWeight, 
+	t10.APRDRG_Descr as APRDRG_Descr,
+	t15.MSDRG_Descr,
+	t1.Code,
+	t7.Cpt,
+	t8.Name as CPTDescription,
+	t2.ChargeCategoryID,
+	t2.Quantity,
+	t2.Total
+	---case when t5.RefundTotal is not null then t5.ReceiptTotal - t5.RefundTotal else t5.ReceiptTotal end FinalPayment 
+from #tbl_01 t1 left Outer Join #tblAbsChargesByCategories t2 on
+t1.VisitID = t2.VisitID
+left outer join BarVisitProviders t3 on
+t1.ProviderID = t3.ProviderID 
+left outer join BarVisits t4 on
+t1.VisitID = t4.VisitID
+left outer join  BarVisitFinancialData t5 on 
+t1.VisitID = t5.VisitID
+left outer join BarVisitFinancialData4 t6 on
+t1.VisitID = t6.VisitID
+left outer Join AbsCptCodes t7 on
+t1.VisitID = t7.VisitID
+and t7.CptSeqID = '1'
+left outer join DAbsCpts t8 on
+t7.Cpt = t8.CptID
+left outer join AbsDrgData t9 on
+t1.VisitID = t9.VisitID 
+left outer join #tbl_APRDRGCROSSWALK t10 on
+t9.Code = t10.DRGCODE and t4.FinancialClassID in('WC','NF','MD','MDHM','SP','CO')
+left outer join DMisProvider t11 on
+t1.ProviderID = t11.ProviderID
+Left outer join AbsDrgDiagnoses t12 on
+t1.VisitID = t12.VisitID
+and t12.DiagnosisSeqID = '1'
+
+--Left outer join DAbsDiagnoses t13 on
+--t12.Diagnosis = t13.DiagnosisCodeID
+Left outer join #DiagDescrCrosswalk t13 on
+t12.Diagnosis = t13.DiagnosisCodeID 
+
+--and t14.GrouperVersionID ='32icd10'
+left outer join #tbl_MSDRGCROSSWALK t15 on
+t9.Code = t15.DRGCODE and t4.FinancialClassID in('MC','MCHM','BC','OT','CH','HM')
+left outer join DMisDischargeDisposition t16 on
+t4.DischargeDispositionID = t16.DispositionID
+Left outer join AbstractData t17 on
+t1.VisitID = t17.VisitID
+Left outer join #tbl_FinancialClass t18 on--- Added this join  on 03/29/2021
+t4.PrimaryInsuranceID = t18.InsuranceID
+--where t3.VisitProviderTypeID = 'Attending'
+
+--where t2.ChargeCategoryID in('360','361')
+)t2
+Group by
+	--t2.ProviderName,
+	t2.ProviderName_2,
+	t2.VisitID,
+	t2.AccountNumber,
+	t2.PrimaryCodeset,
+	t2.SeqID, --Add this 10-25-2021
+	t2.CodesetDescr,
+	t2.SurgeryDate,
+	t2.DischargeDispostion,
+	t2.AdmitDateTime,
+	t2.DischargeDateTime,
+	t2.ServiceDateTime,
+	t2.PatientName,
+	t2.DOB,
+	t2.FinancialClassID,
+	t2.PrimaryInsuranceID,
+	t2.ProviderID,
+	t2.InpatientOrOutpatient,
+	t2.PatientStatus,
+	t2.AccountType,
+	t2.Diag1,
+	t2.DiagDescr,
+	t2.GrouperVersion,
+	t2.DRG,
+	t2.CostWeight,
+    t2.APRDRG_Descr,
+	t2.MSDRG_Descr,
+	t2.Code,
+	t2.Cpt,
+	t2.CPTDescription,
+    t2.ChargeCategoryID
+)T3
+--where T3.AccountNumber = 'D00049881972'
+Group by
+	T3.ProviderName_2,
+	T3.VisitID,
+	T3.AccountNumber,
+	T3.PrimaryCodeset,
+	T3.CodesetDescr,
+	T3.SeqID,
+	T3.AdmitDateTime,
+	T3.SurgeryDate,
+	T3.DischargeDispostion,
+	T3.DischargeDateTime,
+	T3.ServiceDateTime,
+	T3.PatientName,
+	T3.DOB,
+	T3.FinancialClassID,
+	T3.PrimaryInsuranceID,
+	T3.ProviderID,
+	T3.InpatientOrOutpatient,
+	T3.PatientStatus,
+	T3.AccountType,
+	T3.Diag1,
+	T3.DiagDescr,
+	T3.GrouperVersion,
+	T3.DRG,
+	T3.CostWeight,
+	T3.APRDRG_Descr,
+	T3.MSDRG_Descr,
+	T3.Cpt,
+	T3.CPTDescription
+
+--Today's execution 2:28 seconds
+
+--Today's execution 6:16 seconds
+
+
+
+------ This dataset below identifies the APR DRG or Missing DRG description from the MS DRGDESCR
+-----------------------------------------------------------------------------------------------------------------------------
+
+select distinct
+	t2.AccountNumber,
+	t2.DRG
+
+from
+
+(
+select *
+
+from  #tbl_02 t1
+where t1.InpatientOrOutpatient = 'I'
+and t1.MSDRG_Descr is null
+and t1.FinancialClassID in('MC','MCHM','BC','OT','CH','HM')
+--order by t1.DRG
+)t2
+order by 1
+
+
+
+
+update t1
+set t1.MSDRG_Descr = t2.Name
+from #tbl_02 t1
+inner join DMisDrgCmgName  t2 on
+t1.DRG = t2.DrgNameCmgID
+where t1.MSDRG_Descr is null
+and t1.InpatientOrOutpatient = 'I'
+and t1.FinancialClassID in('MC','MCHM','BC','OT','CH','HM')
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+---APRDRG
+
+select distinct
+	t2.AccountNumber,
+	t2.DRG
+
+from 
+
+(
+select *
+
+from  #tbl_02 t1
+where t1.InpatientOrOutpatient = 'I'
+and t1.APRDRG_Descr is null
+and t1.FinancialClassID in('WC','NF','MD','MDHM','SP','CO')
+--order by t1.DRG
+)t2
+
+
+update t1
+set t1.APRDRG_Descr= t2.Name
+from #tbl_02 t1
+inner join DAbsDrgs  t2 on
+t1.DRG = t2.CodeID 
+where t1.APRDRG_Descr is null
+and t1.InpatientOrOutpatient = 'I'
+and t1.FinancialClassID in('WC','NF','MD','MDHM','SP','CO')
+and t2.GrouperVersionID ='18'
+
+
+
+
+
+Update t1
+set t1.MSDRG_Descr = 'ALCOHOL/DRUG ABUSE OR DEPENDENCE W CC'
+from #tbl_02 t1
+where t1.AccountNumber in('D00049852320',
+'D00050271899')
+
+
+Update t1
+set t1.APRDRG_Descr = 'CESAREAN SECTION WITHOUT STERILIZATION WITHOUT CC/MCC'
+from #tbl_02 t1
+where t1.AccountNumber in('D00053699021','D00053495289','D00053491270')
+
+Update t1
+set t1.APRDRG_Descr = 'CESAREAN SECTION WITHOUT STERILIZATION WITHOUT CC/MCC'
+ 
+from #tbl_02 t1
+where t1.AccountNumber in('D00055197222','D00056571003')
+
+
+/*
+select distinct	
+	t1.DRG,
+	t1.MSDRG_Descr,
+	t1.GrouperVersion
+into #tbl_MissingMSDRG
+from #tbl_02 t1
+where t1.MSDRG_Descr is null
+and t1.InpatientOrOutpatient = 'I'
+and t1.FinancialClassID in('MC','MCHM','BC','HM','OT','CO','CH')
+and t1.MSDRG_Descr is null
+
+
+select 
+t1.DRG,
+t1.GrouperVersion,
+t2.Name
+into #tbl_MissingMSDRG_02
+from #tbl_MissingMSDRG t1
+ inner join DAbsDrgs t2 on
+t1.DRG = t2.CodeID and
+t1.GrouperVersion = t2.GrouperVersionID
+
+
+
+update t1
+set t1.MSDRG_Descr = t2.Name
+from #tbl_02 t1
+inner join #tbl_MissingMSDRG_02 t2 on
+t1.DRG = t2.DRG
+where t1.MSDRG_Descr is null
+and t1.InpatientOrOutpatient = 'I'
+
+
+
+select distinct	
+	t1.DRG,
+	t1.APRDRG_Descr
+into #tbl_MissingAPR
+from #tbl_02 t1
+where t1.APRDRG_Descr is null
+and t1.InpatientOrOutpatient = 'I'
+and t1.FinancialClassID not in('MC','MCHM','BC','HM','OT','CO','CH')
+and t1.APRDRG_Descr is null
+order by 1
+
+
+select 
+t1.DRG,
+t2.Name
+into #tbl_MissingAPR_02
+from #tbl_MissingAPR t1
+inner join DAbsDrgs t2 on
+t1.DRG = t2.CodeID
+where t2.GrouperVersionID = '18'
+
+
+update t1
+set t1.APRDRG_Descr = t2.Name
+from #tbl_02 t1
+inner join #tbl_MissingAPR_02 t2 on
+t1.DRG = t2.DRG
+where t1.APRDRG_Descr is null
+and t1.InpatientOrOutpatient = 'I'
+
+
+
+---This dataset updates the above
+/*
+Update t1
+set t1.MSDRG_Descr = t2.DRGDescr
+from #tbl_02 t1
+inner join  #tbl_DRGupdate t2 on
+t1.DRG = t2.DRG
+--- Unique Encounters
+*/
+
+select *
+from #tbl_MissingAPR_02 t1
+order by 1
+--------------------------------------------------------------------------------------------------
+select
+	t1.VisitID
+from #tbl_02 t1
+group by 
+	t1.VisitID
+having count(*)>1
+
+select distinct
+    t1.AccountNumber,
+	t1.Diag1,
+	t1.DiagDescr
+
+from #tbl_02 t1 
+where t1.DiagDescr is null
+
+
+
+select distinct
+    t1.AccountNumber,
+    t1.DRG,
+	t1.FinancialClassID
+from #tbl_02 t1 
+where t1.MSDRG_Descr is null
+and t1.InpatientOrOutpatient = 'I'
+and t1.FinancialClassID not in('MDHM','MD','NF')
+*/
+--DRG Update Statement
+
+
+
+------------------------------------------------------------------------------------------------------------------------------
+--Drop table #tbl_Receipts
+--Creates dataset Payments
+
+select 
+	t1.VisitID,
+Sum(t1.Receipt)Receipt
+into #tbl_Receipts
+from BarInsuranceBillLedger t1
+inner join BarVisits t2 on
+t1.VisitID = t2.VisitID
+--where t2.AccountNumber = 'D00053354171'
+Group by
+	t1.VisitID
+order by 1
+
+
+Drop table  #tbl_report20190610
+
+Select --distinct
+	t1.AccountNumber,
+	t1.VisitID,
+	t1.ProviderName_2 as ProvideName, 
+	t1.SeqID,
+	t1.PrimaryCodeset,
+	t1.CodesetDescr,
+	t1.AdmitDateTime,
+	t1.SurgeryDate,
+	t1.ServiceDateTime,
+	t1.DischargeDateTime,
+	 FORMAT(t1.DischargeDateTime, 'yyyy-MM')as Month_,
+	DATEDIFF(day, t1.AdmitDateTime, t1.DischargeDateTime) as LOS,
+	t1.PatientName,
+	t1.DOB,
+	t1.FinancialClassID,
+	t1.PrimaryInsuranceID,
+	t1.ProviderID,
+	t1.InpatientOrOutpatient,   
+	t1.PatientStatus,
+	t1.AccountType,
+	t1.Diag1,
+	t1.DiagDescr,
+	t1.GrouperVersion,
+	t1.DRG,
+	t4.DischargeDispositionID,
+	t5.Name as DispositionDescr,
+	t1.CostWeight,
+	t1.APRDRG_Descr as APRDRGDescr,
+	t1.MSDRG_Descr as MSDRGDescr,
+	t1.Cpt,
+	t1.CPTDescription,
+	t1.[M/S],
+	t1.ICU,
+	t1.TELE,
+	t1.Drugs,
+	t1.Supplies,
+	t1.Implants,
+	t1.LAB,
+	t1.RAD,
+	t1.Chemo,
+	t1.IVTherapy,
+	t1.Nuclear,
+	t1.Rad_Pharm,
+	t1.CAT,
+	t1.[OR],
+	t1.ANES,
+	t1.Blood,
+	t1.Imag,
+	t1.[U/S],
+	t1.Resp,
+	t1.PT,
+	t1.ER,
+	t1.MRI,
+	t1.[$636] ,
+	t1.Recover,
+	t1.Treatment_RM,
+	t1.Other,
+	t2.Balance,
+	t1.TotalCharges,
+	t3.Receipt,
+--case when t2.RefundTotal is not null then t2.ReceiptTotal - t2.RefundTotal else t2.ReceiptTotal end FinalPayment, 
+t1.Surgical_Indicator_01,
+case when t1.Surgical_Indicator_01 > 0 then 'Surgical' else 'Non Surgical' end  Surgical_Indicator
+
+into #tbl_report20190610
+from #tbl_02 t1
+left outer join BarVisitFinancialData t2 on
+t1.VisitID = t2.VisitID
+left outer join #tbl_Receipts t3 on
+t1.VisitID = t3.VisitID
+left outer join BarVisits t4 on 
+t1.VisitID = t4.VisitID
+left outer join DMisDischargeDisposition t5 on
+t4.DischargeDispositionID = t5.DispositionID
+--where t1.AccountNumber = 'D00049881972'
+--where [OR]> 0 ---Removed this to ensure a complete record set
+--and t1.ProviderName_2 = 'Choudhri,Haroon'
+order by t1.ProviderName_2
+
+
+
+
+Drop table #tbl_report20190610_2
+
+select
+t2.*
+into #tbl_report20190610_2
+from 
+
+(select row_number() over (partition by AccountNumber order by SeqID  asc)---Changed the orderby from ProviderName to SeqID to reflect the order SeqID in Bar 10/2021
+ as RowNumber, AccountNumber, VisitID, ProvideName, SeqID, PrimaryCodeset,CodesetDescr, AdmitDateTime,	SurgeryDate,	ServiceDateTime,	DischargeDateTime,	Month_,	LOS,	PatientName,	DOB,	FinancialClassID, PrimaryInsuranceID, ProviderID, InpatientOrOutpatient,	PatientStatus,	AccountType,	Diag1,	DiagDescr,	GrouperVersion,	DRG, DischargeDispositionID, DispositionDescr, CostWeight, APRDRGDescr,	MSDRGDescr,	Cpt,	CPTDescription,	[M/S],	ICU,	TELE,	Drugs,	Supplies,	Implants,	LAB,	RAD,	Chemo,	IVTherapy,	Nuclear,	Rad_Pharm,	CAT,	[OR],	ANES,	Blood,	Imag,	[U/S],	Resp,	PT,	ER,	MRI,	[$636], 	Recover,	Treatment_RM,	Other, Balance,	TotalCharges, 	Receipt, Surgical_Indicator
+
+from #tbl_report20190610
+)t2
+where t2. VisitID  not like '%R0%'
+order by t2.VisitID
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- Dataset Provider
+
+select distinct
+	t1.VisitID,
+	t1.ProviderID,
+	t2.Name as ProviderName
+into #tbl_ProvidersforSugrical
+from BarSurgicalProcedures t1
+inner join  DMisProvider t2 on
+t1.ProviderID = t2.ProviderID
+
+--Drop table #tbl_Attending
+
+
+Select distinct
+	t1.VisitID,
+	t1.ProviderID,
+	t1.Name as ProviderName
+into #tbl_Attending
+from BarVisitProviders t1
+where t1.VisitProviderTypeID = 'Attending'
+
+
+Select distinct
+	t1.VisitID,
+	t1.ProviderID,
+	t1.Name as ProviderName
+into #tbl_ER_Provider
+from BarVisitProviders t1
+where t1.VisitProviderTypeID = 'Emergency'
+
+
+
+Select*
+
+from  #tbl_report20190610_2 t1
+where t1.InpatientOrOutpatient = 'I'
+and t1.ProvideName is null
+and t1.Surgical_Indicator = 'Surgical'
+
+
+
+Update t1
+set t1.ProvideName = t2.ProviderName,
+    t1.ProviderID = t2.ProviderID
+from  #tbl_report20190610_2  t1
+left outer join #tbl_ProvidersforSugrical t2 on
+t1.VisitID = t2.VisitID
+where t1.InpatientOrOutpatient = 'I'
+and t1.ProvideName is null
+and t1.Surgical_Indicator = 'Surgical'
+
+
+
+Update t1
+set t1.ProvideName = t2.ProviderName,
+    t1.ProviderID = t2.ProviderID
+from  #tbl_report20190610_2  t1
+left outer join #tbl_Attending t2 on
+t1.VisitID = t2.VisitID
+where t1.InpatientOrOutpatient = 'I'
+and t1.ProvideName is null
+and t1.Surgical_Indicator = 'Non Surgical'
+
+
+Update t1
+set t1.ProvideName = t2.ProviderName,
+    t1.ProviderID = t2.ProviderID
+from  #tbl_report20190610_2  t1
+left outer join #tbl_Attending t2 on
+t1.VisitID = t2.VisitID
+where t1.InpatientOrOutpatient = 'O'
+and t1.ProvideName is null
+and t1.Surgical_Indicator = 'Surgical'
+
+
+
+Update t1
+set t1.ProvideName = t2.ProviderName,
+    t1.ProviderID = t2.ProviderID
+from  #tbl_report20190610_2  t1
+left outer join #tbl_Attending t2 on
+t1.VisitID = t2.VisitID
+where t1.InpatientOrOutpatient = 'O'
+and t1.ProvideName is null
+and t1.Surgical_Indicator = 'Non Surgical'
+
+
+Update t1
+set t1.ProvideName = t2.ProviderName, --- Added this updated to populate emergency room providers who were initially nulls because there are no procedure codes -01-20-2022
+    t1.ProviderID = t2.ProviderID
+from  #tbl_report20190610_2  t1
+left outer join #tbl_ER_Provider t2 on
+t1.VisitID = t2.VisitID
+where t1.PatientStatus = 'ER'
+and t1.ProvideName is null
+and t1.PrimaryCodeset is null
+
+Update t1
+set t1.ProvideName = t2.ProviderName, --- Added this updated to populate emergency room providers who were initially nulls because there are no procedure codes
+    t1.ProviderID = t2.ProviderID
+from  #tbl_report20190610_2  t1
+left outer join #tbl_Attending t2 on
+t1.VisitID = t2.VisitID
+where t1.PatientStatus = 'INP'
+and t1.ProvideName is null
+and t1.PrimaryCodeset is null
+
+
+
+
+Select *
+
+from #tbl_report20190610_2 t1
+where t1.InpatientOrOutpatient = 'O'
+and t1.Surgical_Indicator = 'Surgical'
+and t1.ProvideName is null 
+
+
+Select *
+
+from #tbl_report20190610_2 t1
+where t1.InpatientOrOutpatient = 'O'
+and t1.Surgical_Indicator = 'Non Surgical'
+and t1.ProvideName is null 
+
+
+Select 
+	t1.*,
+	t2.BillingID
+into  #tbl_report20190610_2_01
+from #tbl_report20190610_2  t1
+left outer join BarVisits  t2 on
+t1.VisitID = t2.VisitID
+
+------------------------- Introduced Update Statement below 10-22-2021
+--This update address the issues with diag codes not being updated accordingly
+Update t1
+
+Set t1.Diag1 = t2.DiagnosisCodeID,
+    t1.DiagDescr = t2.Description
+from #tbl_report20190610_2_01 t1
+inner join BarDiagnoses t2 on
+t1.BillingID = t2.BillingID
+where t1.Diag1 is null
+and t2.DiagnosisSeqID = 1
+
+-----------------------------------
+
+Select *
+
+from #tbl_report20190610_2_01  t1
+where t1.Diag1 is null
+
+
+Select t1.*
+
+into ##tbl_PhysicianPerformance
+from #tbl_report20190610_2_01 t1
+
+
+Select * from ##tbl_PhysicianPerformance t1
+
+
+Drop table ##tbl_PhysicianPerformance
+
+--X55 end 
