@@ -1,0 +1,364 @@
+------------------------------------------------------------------------------------------------------------------------------
+--##--- Script create date  10-01-2019
+--##--- Business Unit wants to introduce the below look up cross walk table 20191007
+--##--- Use the left outer join function to join on the first letter of the primary diag
+--##--- Data Source: Meditech EHR 
+--##--- Server DR_01
+
+
+--RUN THE REVIEWER SCRIPT BEFORE RUNNING THIS.
+
+-- Description cross walk table
+Create table #tbl_dxcate
+(
+    Letter Varchar(1),
+    Descr Varchar(100)
+)
+insert into #tbl_dxcate
+values
+('A', 'INFECTIOUS DISEASE');
+insert into #tbl_dxcate
+values
+('B', 'INFECTIOUS DISEASE');
+insert into #tbl_dxcate
+values
+('C', 'NEOPLASMS');
+insert into #tbl_dxcate
+values
+('D', 'DISEASE OF BLOOD');
+insert into #tbl_dxcate
+values
+('E', 'ENDOCRINE,NUTRI, METABOLIC');
+insert into #tbl_dxcate
+values
+('F', 'BEHAVIORAL');
+insert into #tbl_dxcate
+values
+('G', 'NERVOUS SYSTEM');
+insert into #tbl_dxcate
+values
+('H', 'EAR & MASTOID');
+insert into #tbl_dxcate
+values
+('I', 'CIRCULATORY');
+insert into #tbl_dxcate
+values
+('J', 'RESPIRATORY');
+insert into #tbl_dxcate
+values
+('K', 'DISGESTIVE');
+insert into #tbl_dxcate
+values
+('L', 'SKIN & TISSUE');
+insert into #tbl_dxcate
+values
+('M', 'MUSCULOSKELETAL');
+insert into #tbl_dxcate
+values
+('N', 'GENITOURINARY');
+insert into #tbl_dxcate
+values
+('O', 'PREGNANCY,CHILDBIRTH');
+insert into #tbl_dxcate
+values
+('P', 'CONDITIONS ORIGINATING IN THE PERINATAL PERIODD');
+insert into #tbl_dxcate
+values
+('Q', 'CONGENITAL MALFORMATIONS,DEFORM. & CHROM ABN');
+insert into #tbl_dxcate
+values
+('R', 'SIGNS,SYMP OF ABN CLINC FINDINGS');
+insert into #tbl_dxcate
+values
+('S', 'INJURY,POISONING OTH EXT CAUSE');
+insert into #tbl_dxcate
+values
+('T', 'INJURY,POISONING OTH EXT CAUSE');
+insert into #tbl_dxcate
+values
+('Z', 'FACTORS INFLU HEALTH STATUS  & CONTACT W HEALTH SERV');
+-------------------------------------------------------------------------------------------------------------------------------------
+
+--Drop table #tbl_01
+Select Distinct
+    t1.VisitID,
+                            --t4.GlAccountID,
+    t2.Name PatientName,
+    '' as Folder,
+    '' as DatetoDTR,
+    '' as Charts#FromCDS,
+    '' as AFFIL,
+    '' as NursUnitDisch,
+    '' as DenialRecvd,
+    '' as DENIALTYPE,
+    '' as TotDayDenied,
+    '' as firstLvlDateResp,
+    '' as firstLvlOutcome,
+    '' as TotDaysWon,
+    '' as TotDaysLost,
+    t2.AccountNumber,
+    t4.AccountType,
+    t2.InpatientOrOutpatient as Type,
+    t2.PrimaryInsuranceID,
+    t7.PolicyNumber,
+    t2.FinancialClassID,    -- Don't need this field in the Denial Report
+    t1.Batch,
+    t3.AdmitServiceDateTime,
+    t1.ServiceDateTime as Adjdate,
+    t5.DischargeDateTime,
+    -Datediff(day, t5.DischargeDateTime, t3.AdmitServiceDateTime) as LOS,
+                            --t6.ProviderID,
+    t11.Name as ProviderID, -- Using the actually Provide Name instead of ID
+    t1.BatchDateTime as TransactionDate,
+    t1.TransactionProcedureID,
+    t1.Amount,
+    t1.Comment,
+    t1.TransactionID,
+    t1.BillingID,
+    t8.Code,
+                            --case when t5.ObservationPatient = 'Y' then t5.LocationID else t5.DischargeAbsServiceID end as LocationID --- 11-30-2022 Removed this field. The logic was causing Outpatient Location mainly SDC to be reported as Inpatient
+    case
+        when t5.PtStatus = 'IN' then
+            t5.DischargeAbsServiceID
+        else
+            t5.LocationID
+    end as LocationID
+into #tbl_01
+from BarCollectionTransactions t1
+    Left outer join BarVisits t2
+        on t1.VisitID = t2.VisitID
+    Left outer join BarArBalAccountDetails t3
+        on t2.AccountNumber = t3.Number -- and 
+    --left(t2.AdmitDateTime,11) = left(t3.AdmitServiceDateTime,11) ---Removed this join on AdmitDate since I verified in BarArBalAccountDetails that admissiondate wont cause duplicates
+    Left outer join BarVisitFinancialData t4
+        on t2.VisitID = t4.VisitID
+    Left outer join AbstractData t5
+        on t1.VisitID = t5.VisitID
+    Left outer join BarVisitProviders t6
+        on t1.VisitID = t6.VisitID
+           and t6.VisitProviderTypeID = 'Attending' ---Using this requirment specific to the Denial Report. (05-06-2022 Notes Change this to the Attending Physician reporting purposes)
+    --and t6.VisitProviderTypeID = 'Admitting'---Using this requirment specific to the Denial Report. (05-06-2022 Notes Change this to the Attending Physician reporting purposes)
+    Left outer join BarInsuredData t7
+        on t1.VisitID = t7.VisitID
+           and t2.PrimaryInsuranceID = t7.InsuranceID
+    Left outer join AbsDrgData t8
+        on t1.VisitID = t8.VisitID
+    Left outer join AbstractData t9
+        on t1.VisitID = t9.VisitID
+    left outer join BarMonthlyLedgerAuditPatientCs t10
+        on t1.TransactionID = t10.TransactionID
+           and t1.BillingID = t10.BillingID
+    Left outer join DMisProvider t11
+        on t6.ProviderID = t11.ProviderID
+where t1.BatchDateTime >= '2022-01-01 00:00:00.000'
+      and t1.BatchDateTime < '2022-02-01 00:00:00.000' --- Note use the greater than and less then operator to rule out missing dates based on the time component.
+      --and t1.TransactionProcedureID like 'D%'-- Relaxing this criteria so we can tie with the GL.
+      and t10.GlAccountID
+      Between '02.5103.1001' and '02.5104.4011'
+
+--Runtime of above query return 7 seconds 
+--Month of Jan 2014  runtime retunred 1 second
+--full 12 months of 2014 runtime returned 8 seconds
+
+--The below update statment takes care of nulls in the outpatient accounts
+Update t1
+set t1.LocationID = t2.LocationID
+from #tbl_01 t1
+    inner join AbstractData t2
+        on t1.VisitID = t2.VisitID
+where t1.LocationID is null
+
+--Functional dependency 
+select t1.VisitID,
+       t1.AccountNumber
+from #tbl_01 t1
+Group by t1.VisitID,
+         t1.AccountNumber
+Having Count(*) > 1
+order by 2
+
+--------------------------------------------------------------------------------------------------------------------------------
+select t1.VisitID,
+       t1.AccountNumber,
+       Sum(t2.Amount) AdjAmount ---- Note to arrive at the adjustment amount we are aggregating the amount paid with no date restrictions. 
+into #tbl_02
+from #tbl_01 t1
+    left outer join BarCollectionTransactions t2
+        on t1.VisitID = t2.VisitID
+--Where t2.TransactionProcedureID like 'D%' Relaxing this criteria so we can tie with the GL.
+group by t1.VisitID,
+         t1.AccountNumber
+
+--this script below introduces Diags dataset below------------------------------------------------------------------------------------
+select t1.AccountNumber,
+       Max(   case
+                  when t2.DiagnosisSeqID = '1' then
+                      t2.Diagnosis
+              end
+          ) as Diag1,
+       Max(   case
+                  when t2.DiagnosisSeqID = '2' then
+                      t2.Diagnosis
+              end
+          ) as Diag2,
+       Max(   case
+                  when t2.Diagnosis = t3.DiagnosisCodeID
+                       and t2.DiagnosisSeqID = '1' then
+                      t3.TextLine
+              end
+          ) as Diag1Desc,
+       Max(   case
+                  when t2.Diagnosis = t3.DiagnosisCodeID
+                       and t2.DiagnosisSeqID = '2' then
+                      t3.TextLine
+              end
+          ) as Diag2Desc
+into #tbl_03
+from #tbl_01 t1
+    left outer join AbsDrgDiagnoses t2
+        on t1.VisitID = t2.VisitID
+    left outer join DAbsDiagnosisCanDescLongText t3
+        on t2.Diagnosis = t3.DiagnosisCodeID
+--where t2.DiagnosisSeqID in('1','2')
+--where t1.AccountNumber = 'D00043811314'
+Group by t1.AccountNumber
+-----------------------------------------------------------------------------------------------------------------------------------
+select t1.*,
+       t2.AdjAmount,
+       t3.Diag1,
+       t3.Diag2
+into #tbl_04
+from #tbl_01 t1
+    inner join #tbl_02 t2
+        on t1.AccountNumber = t2.AccountNumber
+    inner join #tbl_03 t3
+        on t1.AccountNumber = t3.AccountNumber
+select t1.PatientName,
+       t1.Folder,
+       t1.PrimaryInsuranceID,
+       t1.PolicyNumber,
+       t1.DatetoDTR,
+       t1.AccountNumber,
+       t1.Charts#FromCDS,
+       t1.AdmitServiceDateTime,
+       t1.DischargeDateTime,
+       t1.LOS,
+       t1.ProviderID as AttendingMD, ----Change designation to AttendingMD
+       t1.Diag1,
+       t1.Diag2,
+       t1.AFFIL,
+       t1.Code as DRG,
+       t1.NursUnitDisch,
+       t1.DenialRecvd,
+       t1.DENIALTYPE,
+       t1.TotDayDenied,
+       t1.firstLvlDateResp,
+       t1.firstLvlOutcome,
+       t1.TotDaysWon,
+       t1.TotDaysLost,
+       t1.Adjdate,
+       t1.AdjAmount,
+       t1.Amount as TxnAmount,
+       t1.TransactionProcedureID,
+       t1.TransactionDate,
+       t1.Type,
+       t1.LocationID,
+       t1.FinancialClassID,
+       t1.TransactionID,
+       t1.BillingID
+into #tbl_final_01
+from #tbl_04 t1
+select distinct
+    t2.GlAccountID,
+    t1.*
+into #tbl_final_02
+from #tbl_final_01 t1
+    left outer join BarMonthlyLedgerAuditPatientCs t2
+        on t1.TransactionID = t2.TransactionID
+           and t1.BillingID = t2.BillingID
+--where t2.GlAccountID Between '02.5103.1001' and '02.5104.4001' ---Using this GL Range From the Source Denial Report
+--Note: Not using the above GL Code range we seem to be spot on with the existing Source Denial Report From Meditech.
+/*
+where t2.GlAccountID  in('02.5103.1002',
+'02.5103.1003',
+'02.5103.1004',
+'02.5103.1005',
+'02.5103.1006',
+'02.5103.1007',
+'02.5103.1009',
+'02.5103.1010',
+'02.5103.1011')
+*/
+where t2.GlAccountID
+      Between '02.5103.1001' and '02.5104.4011'
+      and t2.SegmentDateTime like '%2022%'
+select t1.*,
+       t2.Descr --Added this 12-03-2020.
+into ##tbl_final
+from #tbl_final_02 t1
+    left outer join #tbl_dxcate t2
+        on left(t1.Diag1, 1) = left(t2.Letter, 1)
+--Added this here also 12-03-2020.
+
+--Added the below logic to pull in the reviewer. The reviewer table needs to be generated from the CDS table scrip. 12-03-2020
+select t1.*,
+       t2.Response,
+       t3.Response as InternalOutcome
+--t2.Response as Response2
+from ##tbl_final t1
+    left outer join ##tbl_ReviewerTable t2
+        on t1.AccountNumber = t2.AccountNumber
+    left outer join ##Tbl_InternalOutcome t3
+        on t1.AccountNumber = t3.AccountNumber
+
+--Runtime of above query return 7 seconds 
+--full 12 months of 2014 runtime returned 8 seconds
+
+--The query below is for Denial related proc codes outside of the GL Range
+select *
+from #tbl_final_02 t1
+where (t1.GlAccountID < '02.5103.1002')
+      or (t1.GlAccountID > '02.5104.4011')
+
+-- The Below insures that the total denial dollar amount reconcile to the total dollar report on the monthly GL
+select -Sum(t2.TxnAmount) Transcation_Level_Report
+from
+(Select * from #tbl_final_02) t2
+select Sum(t2.Amount) Monthly_Ledger
+from
+(
+    select *
+    from BarMonthlyLedgerGlAccountInfo t1
+    --where t1.GlAccountID Between '02.5103.1001' and '02.5104.4001'
+    where t1.GlAccountID
+          Between '02.5103.1001' and '02.5104.4011'
+          and t1.SegmentDateTime >= '2022-01-01 00:00:00.000'
+          and t1.SegmentDateTime < '2022-02-01 00:00:00.000'
+
+--order by t1.SegmentDateTime asc
+---order by t1.GlAccountID asc, t1.Quantity asc
+) t2
+
+--December 2019 Denial Report 794400.28
+
+--December 2019 Monthly Ledger 794400.28
+select *
+--into ##tbl_final
+from BarMonthlyLedgerGlAccountInfo
+
+--End
+--- Working version of Ledger Report
+
+--------------------------------------------------------------------------------------------------------------------------------------
+--- Below is the high level Summary roll up of the above detail report
+select *
+from BarMonthlyLedgerGlAccountInfo t1
+where t1.GlAccountID
+      Between '02.5103.1001' and '02.5104.40011'
+      --where t1.GlAccountID in('02.5103.1002','02.5103.1003','02.5103.1004','02.5103.1005','02.5103.1006','02.5103.1007','02.5103.1009','02.5103.1010')
+      --and t1.Quantity in('47','10')
+      --and t1.Quantity > 0
+      and t1.SegmentDateTime = '2020-01-31 00:00:00.000'
+order by t1.GlAccountID asc,
+         t1.Quantity asc
+-----------------------------------------------------------------------------------------------------------------------------------------
