@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.1022
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "InternalFTP_IPA", "InternalFTP_IPA\InternalFTP_IPA.dtproj", "{C1A13559-85F0-4915-ADBE-CDE2DFD75B49}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Development|Default = Development|Default
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C1A13559-85F0-4915-ADBE-CDE2DFD75B49}.Development|Default.ActiveCfg = Development
+		{C1A13559-85F0-4915-ADBE-CDE2DFD75B49}.Development|Default.Build.0 = Development
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {41FA0ABB-1D0F-4547-AFAC-FF5F85A0A97D}
+	EndGlobalSection
+EndGlobal
